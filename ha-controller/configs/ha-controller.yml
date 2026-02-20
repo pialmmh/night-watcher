@@ -1,0 +1,65 @@
+cluster:
+  name: bdcom-ha
+  tenant: bdcom
+  quorum: 2
+  fence_timeout: 30s
+
+consul:
+  address: "127.0.0.1:8500"
+  datacenter: dc1
+  session_ttl: 15s
+  lock_delay: 5s
+
+nodes:
+  - id: bdcom1
+    address: 10.255.246.173
+    ssh:
+      user: root
+      key_path: /root/.ssh/id_rsa
+      port: 22
+    fence_cmd: "ssh root@10.255.246.173 'poweroff'"
+
+  - id: bdcom2
+    address: 10.255.246.174
+    ssh:
+      user: root
+      key_path: /root/.ssh/id_rsa
+      port: 22
+    fence_cmd: "ssh root@10.255.246.174 'poweroff'"
+
+groups:
+  - id: sigtran-vip
+    resources:
+      - id: vip-sigtran
+        type: vip
+        attrs:
+          ip: "10.255.246.175"
+          cidr: "24"
+          interface: eth0
+
+    checks:
+      - name: sigtran-process
+        type: script
+        target: "pgrep -f 'sigtran.*jar'"
+        expect: "[0-9]"
+        interval: 5s
+        timeout: 3s
+
+      - name: redis-sentinel
+        type: tcp
+        target: "127.0.0.1:26380"
+        interval: 10s
+        timeout: 3s
+
+      - name: kafka-broker
+        type: tcp
+        target: "127.0.0.1:9092"
+        interval: 10s
+        timeout: 3s
+
+      - name: routesphere-health
+        type: http
+        target: "http://127.0.0.1:19999/q/health"
+        expect: "UP"
+        interval: 10s
+        timeout: 5s
