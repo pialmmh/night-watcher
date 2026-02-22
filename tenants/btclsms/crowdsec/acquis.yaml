@@ -1,0 +1,25 @@
+# CrowdSec log acquisition - BTCL SMS
+
+# Nginx access logs
+filenames:
+  - /var/log/nginx/access.log
+labels:
+  type: nginx
+---
+# Nginx error logs
+filenames:
+  - /var/log/nginx/error.log
+labels:
+  type: nginx
+---
+# ModSecurity audit log
+filenames:
+  - /var/log/modsec_audit.log
+labels:
+  type: modsecurity
+---
+# SSH auth log
+filenames:
+  - /var/log/auth.log
+labels:
+  type: syslog

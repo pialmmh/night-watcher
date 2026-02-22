@@ -1,0 +1,43 @@
+<!-- Fail2Ban alert rules for Wazuh -->
+<group name="fail2ban,">
+
+  <rule id="100200" level="3">
+    <decoded_as>fail2ban</decoded_as>
+    <description>Fail2Ban: generic event</description>
+  </rule>
+
+  <rule id="100201" level="6">
+    <if_sid>100200</if_sid>
+    <match>Ban</match>
+    <description>Fail2Ban: IP banned in jail $(jail_name) - $(srcip)</description>
+    <group>fail2ban,ban,</group>
+  </rule>
+
+  <rule id="100202" level="3">
+    <if_sid>100200</if_sid>
+    <match>Unban</match>
+    <description>Fail2Ban: IP unbanned from jail $(jail_name) - $(srcip)</description>
+    <group>fail2ban,unban,</group>
+  </rule>
+
+  <rule id="100203" level="4">
+    <if_sid>100200</if_sid>
+    <match>Found</match>
+    <description>Fail2Ban: match found in jail $(jail_name) from $(srcip)</description>
+    <group>fail2ban,match,</group>
+  </rule>
+
+  <rule id="100204" level="10" frequency="5" timeframe="600">
+    <if_matched_sid>100201</if_matched_sid>
+    <description>Fail2Ban: multiple bans in 10 minutes (possible attack)</description>
+    <group>fail2ban,attack,</group>
+  </rule>
+
+  <rule id="100205" level="12">
+    <if_sid>100201</if_sid>
+    <match>nginx-modsecurity</match>
+    <description>Fail2Ban: IP banned by ModSecurity WAF - $(srcip)</description>
+    <group>fail2ban,waf,ban,</group>
+  </rule>
+
+</group>

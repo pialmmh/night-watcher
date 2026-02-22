@@ -1,0 +1,21 @@
+# CrowdSec IP Whitelist - BTCL SMS
+# These IPs/ranges will never be banned
+
+name: btclsms/whitelists
+description: "BTCL SMS trusted networks"
+whitelist:
+  reason: "trusted internal network"
+  ip:
+    - "127.0.0.1"
+  cidr:
+    - "10.10.0.0/16"       # Container subnets (all nodes)
+    - "10.9.9.0/24"        # WireGuard overlay mesh
+    - "192.168.24.0/24"    # BTCL physical server LAN
+    - "10.246.7.0/24"      # BTCL baremetal server LAN
+    - "172.16.1.0/24"      # Internal routing
+    - "172.20.0.0/26"      # Docker bridge (dell-sms-master)
+    - "172.19.0.0/16"      # Docker network
+    - "172.17.0.0/16"      # Docker default bridge
+    - "172.18.0.0/16"      # Docker network
+    - "172.21.0.0/16"      # Docker network
+    - "10.15.192.0/24"     # VPN client range

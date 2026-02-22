@@ -1,0 +1,36 @@
+<!-- CrowdSec alert rules for Wazuh -->
+<group name="crowdsec,">
+
+  <rule id="100100" level="3">
+    <decoded_as>crowdsec</decoded_as>
+    <description>CrowdSec: generic event</description>
+  </rule>
+
+  <rule id="100101" level="6">
+    <if_sid>100100</if_sid>
+    <match>Ban</match>
+    <description>CrowdSec: IP banned - $(srcip)</description>
+    <group>crowdsec,ban,</group>
+  </rule>
+
+  <rule id="100102" level="3">
+    <if_sid>100100</if_sid>
+    <match>Unban</match>
+    <description>CrowdSec: IP unbanned - $(srcip)</description>
+    <group>crowdsec,unban,</group>
+  </rule>
+
+  <rule id="100103" level="8">
+    <if_sid>100100</if_sid>
+    <match>scenario</match>
+    <description>CrowdSec: alert triggered - $(rule_description)</description>
+    <group>crowdsec,alert,</group>
+  </rule>
+
+  <rule id="100104" level="10" frequency="5" timeframe="300">
+    <if_matched_sid>100101</if_matched_sid>
+    <description>CrowdSec: multiple IPs banned in 5 minutes (possible attack)</description>
+    <group>crowdsec,attack,</group>
+  </rule>
+
+</group>

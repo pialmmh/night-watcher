@@ -1,0 +1,7 @@
+# CrowdSec collections to install - BTCL SMS
+# One collection per line, installed via: cscli collections install <name>
+
+crowdsecurity/nginx
+crowdsecurity/linux
+crowdsecurity/http-cve
+crowdsecurity/modsecurity

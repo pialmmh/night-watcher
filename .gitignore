@@ -1,0 +1,10 @@
+# Node
+dashboard/node_modules/
+dashboard/dist/
+
+# Tenant secrets (contain credentials)
+tenants/*/tenant.conf
+tenants/*/ACCESS_INFO.md
+
+# OS
+.DS_Store

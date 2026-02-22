@@ -194,3 +194,14 @@ func (e *Engine) shutdown() error {
 func (e *Engine) State() EngineState {
 	return e.state
 }
+
+// Groups returns the resource groups managed by the engine.
+func (e *Engine) Groups() []*resource.ResourceGroup {
+	return e.groups
+}
+
+// CurrentLeader returns the current leader node ID, or empty string.
+func (e *Engine) CurrentLeader() string {
+	leader, _ := e.election.CurrentLeader()
+	return leader
+}

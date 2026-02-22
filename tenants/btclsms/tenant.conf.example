@@ -1,0 +1,23 @@
+# Tenant Config - Security Bundle
+# Copy to tenant.conf and fill in real values
+
+tenant_name=btclsms
+ssh_tenant=btcl
+ssh_server=dell-sms-master
+deploy_user=telcobright
+
+# MySQL (external)
+mysql_host=10.10.x.x
+mysql_port=3306
+mysql_user=security_bundle
+mysql_pass=CHANGE_ME
+mysql_db=security_monitoring
+
+# Wazuh
+wazuh_api_user=admin
+wazuh_api_pass=CHANGE_ME
+wazuh_registration_password=CHANGE_ME
+
+# Container
+container_memory=2g
+container_ports=80,443,1514,1515,5601,9000

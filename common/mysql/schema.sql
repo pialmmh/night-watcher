@@ -1,0 +1,170 @@
+-- Security Bundle MySQL Schema
+-- Creates tables for alert storage, watchdog events, ban tracking, and nginx stats
+-- All tables are partitioned by month for easy data lifecycle management
+-- Run: mysql -h HOST -P PORT -u USER -pPASS DB < schema.sql
+
+-- ── Wazuh Alerts ────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS wazuh_alerts (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    tenant VARCHAR(64) NOT NULL,
+    alert_timestamp DATETIME NOT NULL,
+    rule_id VARCHAR(20) NOT NULL,
+    rule_level TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    rule_description VARCHAR(512) NOT NULL DEFAULT '',
+    agent_name VARCHAR(128) NOT NULL DEFAULT 'local',
+    src_ip VARCHAR(45) NOT NULL DEFAULT '',
+    rule_groups VARCHAR(512) NOT NULL DEFAULT '[]',
+    raw_json TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id, alert_timestamp),
+    INDEX idx_tenant_ts (tenant, alert_timestamp),
+    INDEX idx_rule_level (rule_level, alert_timestamp),
+    INDEX idx_src_ip (src_ip, alert_timestamp),
+    INDEX idx_rule_id (rule_id, alert_timestamp)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+PARTITION BY RANGE (TO_DAYS(alert_timestamp)) (
+    PARTITION p2026_01 VALUES LESS THAN (TO_DAYS('2026-02-01')),
+    PARTITION p2026_02 VALUES LESS THAN (TO_DAYS('2026-03-01')),
+    PARTITION p2026_03 VALUES LESS THAN (TO_DAYS('2026-04-01')),
+    PARTITION p2026_04 VALUES LESS THAN (TO_DAYS('2026-05-01')),
+    PARTITION p2026_05 VALUES LESS THAN (TO_DAYS('2026-06-01')),
+    PARTITION p2026_06 VALUES LESS THAN (TO_DAYS('2026-07-01')),
+    PARTITION p2026_07 VALUES LESS THAN (TO_DAYS('2026-08-01')),
+    PARTITION p2026_08 VALUES LESS THAN (TO_DAYS('2026-09-01')),
+    PARTITION p2026_09 VALUES LESS THAN (TO_DAYS('2026-10-01')),
+    PARTITION p2026_10 VALUES LESS THAN (TO_DAYS('2026-11-01')),
+    PARTITION p2026_11 VALUES LESS THAN (TO_DAYS('2026-12-01')),
+    PARTITION p2026_12 VALUES LESS THAN (TO_DAYS('2027-01-01')),
+    PARTITION p_future VALUES LESS THAN MAXVALUE
+);
+
+-- ── Watchdog Events ─────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS watchdog_events (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    tenant VARCHAR(64) NOT NULL,
+    service_name VARCHAR(128) NOT NULL,
+    event_type VARCHAR(32) NOT NULL COMMENT 'drain_start, failover, failback, primary_down, both_down, drain_recovered',
+    detail VARCHAR(512) NOT NULL DEFAULT '',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id, created_at),
+    INDEX idx_tenant_svc (tenant, service_name, created_at),
+    INDEX idx_event_type (event_type, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+PARTITION BY RANGE (TO_DAYS(created_at)) (
+    PARTITION p2026_01 VALUES LESS THAN (TO_DAYS('2026-02-01')),
+    PARTITION p2026_02 VALUES LESS THAN (TO_DAYS('2026-03-01')),
+    PARTITION p2026_03 VALUES LESS THAN (TO_DAYS('2026-04-01')),
+    PARTITION p2026_04 VALUES LESS THAN (TO_DAYS('2026-05-01')),
+    PARTITION p2026_05 VALUES LESS THAN (TO_DAYS('2026-06-01')),
+    PARTITION p2026_06 VALUES LESS THAN (TO_DAYS('2026-07-01')),
+    PARTITION p2026_07 VALUES LESS THAN (TO_DAYS('2026-08-01')),
+    PARTITION p2026_08 VALUES LESS THAN (TO_DAYS('2026-09-01')),
+    PARTITION p2026_09 VALUES LESS THAN (TO_DAYS('2026-10-01')),
+    PARTITION p2026_10 VALUES LESS THAN (TO_DAYS('2026-11-01')),
+    PARTITION p2026_11 VALUES LESS THAN (TO_DAYS('2026-12-01')),
+    PARTITION p2026_12 VALUES LESS THAN (TO_DAYS('2027-01-01')),
+    PARTITION p_future VALUES LESS THAN MAXVALUE
+);
+
+-- ── Ban Events (Fail2Ban + CrowdSec) ───────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS ban_events (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    tenant VARCHAR(64) NOT NULL,
+    event_timestamp DATETIME NOT NULL,
+    source VARCHAR(32) NOT NULL COMMENT 'fail2ban or crowdsec',
+    jail_or_scenario VARCHAR(128) NOT NULL DEFAULT '',
+    action VARCHAR(16) NOT NULL COMMENT 'ban, unban, captcha, throttle',
+    ip VARCHAR(45) NOT NULL,
+    reason VARCHAR(512) NOT NULL DEFAULT '',
+    duration_sec INT UNSIGNED NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id, event_timestamp),
+    INDEX idx_tenant_ts (tenant, event_timestamp),
+    INDEX idx_ip (ip, event_timestamp),
+    INDEX idx_source_action (source, action, event_timestamp)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+PARTITION BY RANGE (TO_DAYS(event_timestamp)) (
+    PARTITION p2026_01 VALUES LESS THAN (TO_DAYS('2026-02-01')),
+    PARTITION p2026_02 VALUES LESS THAN (TO_DAYS('2026-03-01')),
+    PARTITION p2026_03 VALUES LESS THAN (TO_DAYS('2026-04-01')),
+    PARTITION p2026_04 VALUES LESS THAN (TO_DAYS('2026-05-01')),
+    PARTITION p2026_05 VALUES LESS THAN (TO_DAYS('2026-06-01')),
+    PARTITION p2026_06 VALUES LESS THAN (TO_DAYS('2026-07-01')),
+    PARTITION p2026_07 VALUES LESS THAN (TO_DAYS('2026-08-01')),
+    PARTITION p2026_08 VALUES LESS THAN (TO_DAYS('2026-09-01')),
+    PARTITION p2026_09 VALUES LESS THAN (TO_DAYS('2026-10-01')),
+    PARTITION p2026_10 VALUES LESS THAN (TO_DAYS('2026-11-01')),
+    PARTITION p2026_11 VALUES LESS THAN (TO_DAYS('2026-12-01')),
+    PARTITION p2026_12 VALUES LESS THAN (TO_DAYS('2027-01-01')),
+    PARTITION p_future VALUES LESS THAN MAXVALUE
+);
+
+-- ── Nginx Hourly Stats ──────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS nginx_hourly_stats (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    tenant VARCHAR(64) NOT NULL,
+    hour_start DATETIME NOT NULL,
+    total_requests BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    status_2xx BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    status_3xx BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    status_4xx BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    status_5xx BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    waf_blocked BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    avg_response_ms DECIMAL(10,2) NOT NULL DEFAULT 0,
+    unique_ips INT UNSIGNED NOT NULL DEFAULT 0,
+    bytes_sent BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id, hour_start),
+    UNIQUE INDEX idx_tenant_hour (tenant, hour_start),
+    INDEX idx_hour (hour_start)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+PARTITION BY RANGE (TO_DAYS(hour_start)) (
+    PARTITION p2026_01 VALUES LESS THAN (TO_DAYS('2026-02-01')),
+    PARTITION p2026_02 VALUES LESS THAN (TO_DAYS('2026-03-01')),
+    PARTITION p2026_03 VALUES LESS THAN (TO_DAYS('2026-04-01')),
+    PARTITION p2026_04 VALUES LESS THAN (TO_DAYS('2026-05-01')),
+    PARTITION p2026_05 VALUES LESS THAN (TO_DAYS('2026-06-01')),
+    PARTITION p2026_06 VALUES LESS THAN (TO_DAYS('2026-07-01')),
+    PARTITION p2026_07 VALUES LESS THAN (TO_DAYS('2026-08-01')),
+    PARTITION p2026_08 VALUES LESS THAN (TO_DAYS('2026-09-01')),
+    PARTITION p2026_09 VALUES LESS THAN (TO_DAYS('2026-10-01')),
+    PARTITION p2026_10 VALUES LESS THAN (TO_DAYS('2026-11-01')),
+    PARTITION p2026_11 VALUES LESS THAN (TO_DAYS('2026-12-01')),
+    PARTITION p2026_12 VALUES LESS THAN (TO_DAYS('2027-01-01')),
+    PARTITION p_future VALUES LESS THAN MAXVALUE
+);
+
+-- ── HA Controller Events ──────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS ha_events (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    tenant VARCHAR(64) NOT NULL,
+    event_timestamp DATETIME NOT NULL,
+    node_id VARCHAR(50) NOT NULL,
+    event_type ENUM('promoted','demoted','failover','fence','vip_activated','vip_deactivated') NOT NULL,
+    detail TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id, event_timestamp),
+    INDEX idx_tenant_ts (tenant, event_timestamp),
+    INDEX idx_node (node_id, event_timestamp),
+    INDEX idx_event_type (event_type, event_timestamp)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+PARTITION BY RANGE (TO_DAYS(event_timestamp)) (
+    PARTITION p2026_01 VALUES LESS THAN (TO_DAYS('2026-02-01')),
+    PARTITION p2026_02 VALUES LESS THAN (TO_DAYS('2026-03-01')),
+    PARTITION p2026_03 VALUES LESS THAN (TO_DAYS('2026-04-01')),
+    PARTITION p2026_04 VALUES LESS THAN (TO_DAYS('2026-05-01')),
+    PARTITION p2026_05 VALUES LESS THAN (TO_DAYS('2026-06-01')),
+    PARTITION p2026_06 VALUES LESS THAN (TO_DAYS('2026-07-01')),
+    PARTITION p2026_07 VALUES LESS THAN (TO_DAYS('2026-08-01')),
+    PARTITION p2026_08 VALUES LESS THAN (TO_DAYS('2026-09-01')),
+    PARTITION p2026_09 VALUES LESS THAN (TO_DAYS('2026-10-01')),
+    PARTITION p2026_10 VALUES LESS THAN (TO_DAYS('2026-11-01')),
+    PARTITION p2026_11 VALUES LESS THAN (TO_DAYS('2026-12-01')),
+    PARTITION p2026_12 VALUES LESS THAN (TO_DAYS('2027-01-01')),
+    PARTITION p_future VALUES LESS THAN MAXVALUE
+);

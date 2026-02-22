@@ -1,0 +1,61 @@
+# BTCL SMS - Next.js app (port 9000)
+# Backup taken: 2026-02-14
+
+server {
+    listen 9000;
+    server_name _;
+
+    modsecurity on;
+    modsecurity_rules_file /etc/nginx/modsecurity/main.conf;
+
+    # Handle static images and assets at root level
+    location ~ \.(png|jpg|jpeg|gif|svg|ico|css|js|woff|woff2|ttf|eot)$ {
+        proxy_pass http://10.246.7.102:30000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Handle Next.js static assets
+    location /_next/static/ {
+        proxy_pass http://10.246.7.102:30000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Handle Next.js images
+    location /_next/image {
+        proxy_pass http://10.246.7.102:30000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Handle both /en and /bn routes
+    location ~ ^/(en|bn) {
+        proxy_pass http://10.246.7.102:30000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Handle root redirect to default locale
+    location = / {
+        proxy_pass http://10.246.7.102:30000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

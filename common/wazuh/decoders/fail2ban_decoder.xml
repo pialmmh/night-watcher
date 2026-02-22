@@ -1,0 +1,19 @@
+<!-- Fail2Ban log decoder for Wazuh -->
+<!-- Uses Wazuh/OSSEC regex syntax (not PCRE) -->
+<decoder name="fail2ban">
+  <prematch>fail2ban</prematch>
+</decoder>
+
+<decoder name="fail2ban-action">
+  <parent>fail2ban</parent>
+  <prematch>\.actions</prematch>
+  <regex offset="after_prematch">\S+ (\S+) \[(\S+)\] (Ban|Unban) (\S+)</regex>
+  <order>log_level, jail_name, action, srcip</order>
+</decoder>
+
+<decoder name="fail2ban-found">
+  <parent>fail2ban</parent>
+  <prematch>\.filter</prematch>
+  <regex offset="after_prematch">\S+ (\S+) \[(\S+)\] Found (\S+)</regex>
+  <order>log_level, jail_name, srcip</order>
+</decoder>

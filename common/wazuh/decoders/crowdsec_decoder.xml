@@ -1,0 +1,19 @@
+<!-- CrowdSec log decoder for Wazuh -->
+<!-- Uses Wazuh/OSSEC regex syntax (not PCRE) -->
+<decoder name="crowdsec">
+  <prematch>^time="</prematch>
+</decoder>
+
+<decoder name="crowdsec-decision">
+  <parent>crowdsec</parent>
+  <prematch>msg="</prematch>
+  <regex offset="after_prematch">(\S+)" ip="(\S+)"</regex>
+  <order>action, srcip</order>
+</decoder>
+
+<decoder name="crowdsec-alert">
+  <parent>crowdsec</parent>
+  <prematch>scenario="</prematch>
+  <regex offset="after_prematch">(\S+)" source_ip="(\S+)"</regex>
+  <order>rule_description, srcip</order>
+</decoder>

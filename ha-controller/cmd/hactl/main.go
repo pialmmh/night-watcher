@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/telcobright/ha-controller/internal/api"
 	"github.com/telcobright/ha-controller/internal/config"
 	"github.com/telcobright/ha-controller/internal/consul"
 	"github.com/telcobright/ha-controller/internal/engine"
@@ -27,12 +28,14 @@ func main() {
 		nodeID      string
 		showVersion bool
 		logLevel    string
+		apiPort     int
 	)
 
 	flag.StringVar(&configPath, "config", "", "path to config file")
 	flag.StringVar(&nodeID, "node", "", "this node's ID (must match a node in config)")
 	flag.BoolVar(&showVersion, "version", false, "print version and exit")
 	flag.StringVar(&logLevel, "log-level", "info", "log level (debug, info, warn, error)")
+	flag.IntVar(&apiPort, "api-port", 7102, "port for status API server")
 	flag.Parse()
 
 	if showVersion {
@@ -117,6 +120,9 @@ func main() {
 				}
 				vip := resource.NewVipResource(rc.ID, ip, cidr, iface, localExec, logger)
 				resources = append(resources, vip)
+			case "noop":
+				noop := resource.NewNoopResource(rc.ID, logger)
+				resources = append(resources, noop)
 			default:
 				logger.Warn("unknown resource type, skipping", "type", rc.Type, "id", rc.ID)
 			}
@@ -130,6 +136,14 @@ func main() {
 
 	// Create engine.
 	eng := engine.NewEngine(cfg, nodeID, consulClient, election, groups, logger)
+
+	// Start status API server.
+	apiServer := api.NewServer(eng, nodeID, logger)
+	go func() {
+		if err := apiServer.Start(apiPort); err != nil {
+			logger.Error("API server failed", "err", err)
+		}
+	}()
 
 	// Run with graceful shutdown.
 	ctx, cancel := context.WithCancel(context.Background())
