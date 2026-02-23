@@ -148,7 +148,7 @@ echo "Setting up Wazuh certificates..."
 WAZUH_DATA="/var/ossec/data"
 CERT_DIR="/etc/wazuh-indexer/certs"
 DASH_CERT_DIR="/etc/wazuh-dashboard/certs"
-mkdir -p "$CERT_DIR" "$DASH_CERT_DIR"
+mkdir -p "$WAZUH_DATA" "$CERT_DIR" "$DASH_CERT_DIR"
 
 # Generate root CA
 openssl genrsa -out "$CERT_DIR/root-ca-key.pem" 2048 2>/dev/null

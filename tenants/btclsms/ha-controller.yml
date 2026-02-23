@@ -1,6 +1,6 @@
 cluster:
-  name: bdcom-ha
-  tenant: bdcom
+  name: btcl-ha
+  tenant: btcl
   quorum: 2
   fence_timeout: 30s
 
@@ -11,21 +11,29 @@ consul:
   lock_delay: 5s
 
 nodes:
-  - id: bdcom1
-    address: 10.255.246.173
+  - id: btcl-nw-1
+    address: 10.10.196.200
     ssh:
       user: root
       key_path: /root/.ssh/id_rsa
       port: 22
-    fence_cmd: "ssh root@10.255.246.173 'poweroff'"
+    fence_cmd: "ssh root@10.10.196.200 'poweroff'"
 
-  - id: bdcom2
-    address: 10.255.246.174
+  - id: btcl-nw-2
+    address: 10.10.195.200
     ssh:
       user: root
       key_path: /root/.ssh/id_rsa
       port: 22
-    fence_cmd: "ssh root@10.255.246.174 'poweroff'"
+    fence_cmd: "ssh root@10.10.195.200 'poweroff'"
+
+  - id: btcl-nw-3
+    address: 10.10.194.200
+    ssh:
+      user: root
+      key_path: /root/.ssh/id_rsa
+      port: 22
+    fence_cmd: "ssh root@10.10.194.200 'poweroff'"
 
 groups:
   - id: sigtran-vip
