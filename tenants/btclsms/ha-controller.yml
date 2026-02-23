@@ -12,12 +12,12 @@ consul:
 
 nodes:
   - id: btcl-nw-1
-    address: 10.10.196.200
+    address: 10.10.189.200
     ssh:
       user: root
       key_path: /root/.ssh/id_rsa
       port: 22
-    fence_cmd: "ssh root@10.10.196.200 'poweroff'"
+    fence_cmd: "ssh root@10.10.189.200 'poweroff'"
 
   - id: btcl-nw-2
     address: 10.10.195.200
