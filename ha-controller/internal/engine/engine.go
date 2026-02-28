@@ -8,6 +8,7 @@ import (
 	"github.com/telcobright/ha-controller/internal/config"
 	"github.com/telcobright/ha-controller/internal/consul"
 	"github.com/telcobright/ha-controller/internal/resource"
+	"github.com/telcobright/ha-controller/internal/sentinel"
 )
 
 // EngineState represents the controller's current role.
@@ -36,28 +37,42 @@ func (s EngineState) String() string {
 }
 
 // Engine is the main reconciliation loop for the HA controller.
-// The leader runs health checks and manages resource groups.
-// Followers wait to acquire leadership.
+// All nodes run health checks and publish observations.
+// The coordinator (Consul lock holder) triggers failover when quorum agrees.
 type Engine struct {
-	cfg      *config.Config
-	nodeID   string
-	consul   *consul.Client
-	election *consul.LeaderElection
-	groups   []*resource.ResourceGroup
-	state    EngineState
-	logger   *slog.Logger
+	cfg         *config.Config
+	nodeID      string
+	consul      *consul.Client
+	election    *consul.LeaderElection
+	groups      []*resource.ResourceGroup // kept for API backward compat
+	sentinel    *sentinel.Sentinel
+	coordinator *sentinel.FailoverCoordinator
+	state       EngineState
+	initialized bool
+	logger      *slog.Logger
 }
 
-// NewEngine creates an Engine from config.
-func NewEngine(cfg *config.Config, nodeID string, consulClient *consul.Client, election *consul.LeaderElection, groups []*resource.ResourceGroup, logger *slog.Logger) *Engine {
+// NewEngine creates an Engine with sentinel-based consensus.
+func NewEngine(
+	cfg *config.Config,
+	nodeID string,
+	consulClient *consul.Client,
+	election *consul.LeaderElection,
+	groups []*resource.ResourceGroup,
+	sen *sentinel.Sentinel,
+	coord *sentinel.FailoverCoordinator,
+	logger *slog.Logger,
+) *Engine {
 	return &Engine{
-		cfg:      cfg,
-		nodeID:   nodeID,
-		consul:   consulClient,
-		election: election,
-		groups:   groups,
-		state:    StateInit,
-		logger:   logger.With("component", "engine", "node", nodeID),
+		cfg:         cfg,
+		nodeID:      nodeID,
+		consul:      consulClient,
+		election:    election,
+		groups:      groups,
+		sentinel:    sen,
+		coordinator: coord,
+		state:       StateInit,
+		logger:      logger.With("component", "engine", "node", nodeID),
 	}
 }
 
@@ -74,7 +89,11 @@ func (e *Engine) Run(ctx context.Context) error {
 	e.state = StateFollower
 	e.logger.Info("entering reconciliation loop")
 
-	ticker := time.NewTicker(5 * time.Second)
+	interval := e.cfg.Cluster.CheckInterval.Duration
+	if interval == 0 {
+		interval = 5 * time.Second
+	}
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	renewTicker := time.NewTicker(10 * time.Second)
@@ -98,74 +117,97 @@ func (e *Engine) Run(ctx context.Context) error {
 	}
 }
 
-// reconcile runs one iteration of the control loop.
+// reconcile runs one iteration of the sentinel-aware control loop.
+// Every node: run checks → publish observation → read peers → evaluate ODOWN.
+// Coordinator on ODOWN: select candidate → execute failover.
 func (e *Engine) reconcile(ctx context.Context) error {
-	_ = ctx // will be used when health checks run with context
+	_ = ctx
 
+	// Step 1: Try to acquire coordinator lock.
 	acquired, err := e.election.TryAcquire()
 	if err != nil {
 		return err
 	}
 
 	wasLeader := e.state == StateLeader
-
-	if acquired {
-		if !wasLeader {
-			e.logger.Info("promoted to leader")
-			e.state = StateLeader
-			return e.onBecomeLeader()
-		}
-		// Already leader — run health checks.
-		return e.leaderLoop()
-	}
-
-	// Not leader.
-	if wasLeader {
-		e.logger.Warn("lost leadership")
+	if acquired && !wasLeader {
+		e.logger.Info("promoted to coordinator")
+		e.state = StateLeader
+	} else if !acquired && wasLeader {
+		e.logger.Warn("lost coordinator role")
 		e.state = StateFollower
-		return e.onLoseLeadership()
+	} else if acquired {
+		e.state = StateLeader
 	}
 
-	// Still follower — log current leader.
-	leader, _ := e.election.CurrentLeader()
-	e.logger.Debug("follower waiting", "leader", leader)
-	return nil
-}
-
-// onBecomeLeader is called when this node first acquires leadership.
-func (e *Engine) onBecomeLeader() error {
-	e.logger.Info("activating resource groups")
-	for _, g := range e.groups {
-		if err := g.Activate(); err != nil {
-			e.logger.Error("failed to activate group", "group", g.ID(), "err", err)
+	// Step 2: Coordinator initializes active node on first run.
+	if acquired && !e.initialized {
+		if _, err := e.coordinator.InitializeActiveNode(); err != nil {
+			e.logger.Error("failed to initialize active node", "err", err)
 			return err
 		}
+		e.initialized = true
 	}
-	return nil
-}
 
-// leaderLoop runs health checks and handles degradation.
-func (e *Engine) leaderLoop() error {
-	for _, g := range e.groups {
-		results := g.CheckAll()
-		for id, result := range results {
-			if result.Status != resource.HealthHealthy {
-				e.logger.Warn("resource unhealthy", "resource", id, "status", result.Status, "reason", result.Reason)
-				// TODO: implement escalation policy (retry, failover, alert)
-			}
+	// All nodes load the current active node from Consul (followers learn it too).
+	if !acquired || e.initialized {
+		if _, err := e.sentinel.LoadActiveNode(); err != nil {
+			e.logger.Warn("failed to load active node", "err", err)
 		}
 	}
-	return nil
-}
 
-// onLoseLeadership is called when this node loses the leader lock.
-func (e *Engine) onLoseLeadership() error {
-	e.logger.Warn("deactivating resource groups")
-	for _, g := range e.groups {
-		if err := g.Deactivate(); err != nil {
-			e.logger.Error("failed to deactivate group", "group", g.ID(), "err", err)
+	// Step 3: Every node runs health checks.
+	e.sentinel.RunChecks()
+
+	// Step 4: Publish observation to Consul KV.
+	if err := e.sentinel.PublishObservation(); err != nil {
+		e.logger.Error("failed to publish observation", "err", err)
+	}
+
+	// Step 5: Read all peer observations.
+	observations, err := e.sentinel.ReadAllObservations()
+	if err != nil {
+		e.logger.Error("failed to read observations", "err", err)
+		return nil // non-fatal: continue next cycle
+	}
+
+	// Step 6: Evaluate consensus.
+	odown := e.sentinel.EvaluateConsensus(observations)
+
+	// Step 7: Coordinator handles ODOWN by triggering failover.
+	if acquired && odown {
+		activeNode := e.sentinel.ActiveNodeID()
+		e.logger.Warn("ODOWN detected, coordinator evaluating failover",
+			"active", activeNode)
+
+		if !e.coordinator.CanFailover() {
+			e.logger.Warn("failover suppressed: anti-flap limit reached")
+			return nil
+		}
+
+		candidate, err := e.coordinator.SelectBestCandidate(observations, activeNode)
+		if err != nil {
+			e.logger.Error("no failover candidate available", "err", err)
+			return nil
+		}
+
+		if err := e.coordinator.ExecuteFailover(activeNode, candidate); err != nil {
+			e.logger.Error("failover execution failed", "err", err)
+			return nil
 		}
 	}
+
+	// Log status for followers.
+	if !acquired {
+		leader, _ := e.election.CurrentLeader()
+		e.logger.Debug("follower status",
+			"coordinator", leader,
+			"active", e.sentinel.ActiveNodeID(),
+			"sdown", e.sentinel.IsSdown(),
+			"odown", e.sentinel.IsOdown(),
+		)
+	}
+
 	return nil
 }
 
@@ -175,12 +217,7 @@ func (e *Engine) shutdown() error {
 	e.logger.Info("engine shutting down")
 
 	if e.election.IsLeader() {
-		e.logger.Info("releasing leadership before shutdown")
-		for _, g := range e.groups {
-			if err := g.Deactivate(); err != nil {
-				e.logger.Error("shutdown deactivation failed", "group", g.ID(), "err", err)
-			}
-		}
+		e.logger.Info("releasing coordinator lock before shutdown")
 		if err := e.election.Release(); err != nil {
 			e.logger.Error("release leadership failed", "err", err)
 		}
@@ -195,12 +232,22 @@ func (e *Engine) State() EngineState {
 	return e.state
 }
 
-// Groups returns the resource groups managed by the engine.
+// Groups returns the resource groups (for API backward compat).
 func (e *Engine) Groups() []*resource.ResourceGroup {
 	return e.groups
 }
 
-// CurrentLeader returns the current leader node ID, or empty string.
+// Sentinel returns the sentinel instance for API access.
+func (e *Engine) Sentinel() *sentinel.Sentinel {
+	return e.sentinel
+}
+
+// Coordinator returns the failover coordinator for API access.
+func (e *Engine) Coordinator() *sentinel.FailoverCoordinator {
+	return e.coordinator
+}
+
+// CurrentLeader returns the current coordinator node ID.
 func (e *Engine) CurrentLeader() string {
 	leader, _ := e.election.CurrentLeader()
 	return leader

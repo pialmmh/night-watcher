@@ -1,0 +1,15 @@
+# CrowdSec IP Whitelist - BDCOM
+# These IPs/ranges will never be banned
+
+name: bdcom/whitelists
+description: "BDCOM trusted networks"
+whitelist:
+  reason: "trusted internal network"
+  ip:
+    - "127.0.0.1"
+  cidr:
+    - "10.10.0.0/16"       # Container subnets (all nodes)
+    - "10.9.9.0/24"        # WireGuard overlay mesh
+    - "10.255.246.0/24"    # BDCOM server LAN
+    - "172.16.0.0/12"      # Docker networks
+    - "10.15.192.0/24"     # VPN client range

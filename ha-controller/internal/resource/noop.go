@@ -18,8 +18,8 @@ func NewNoopResource(id string, logger *slog.Logger) *NoopResource {
 	}
 }
 
-func (n *NoopResource) ID() string         { return n.id }
-func (n *NoopResource) Type() string        { return "noop" }
+func (n *NoopResource) ID() string            { return n.id }
+func (n *NoopResource) Type() string          { return "noop" }
 func (n *NoopResource) Status() ResourceState { return n.state }
 
 func (n *NoopResource) Check() HealthResult {

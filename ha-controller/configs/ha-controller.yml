@@ -3,6 +3,12 @@ cluster:
   tenant: bdcom
   quorum: 2
   fence_timeout: 30s
+  fail_threshold: 3        # consecutive failures before SDOWN
+  check_interval: 5s       # sentinel check interval
+  auto_failback: false     # no automatic failback (prevents flapping)
+  max_failovers: 3         # max failovers in window
+  failover_window: 1h      # anti-flap window
+  observation_stale: 30s   # stale observation threshold
 
 consul:
   address: "127.0.0.1:8500"
@@ -13,6 +19,7 @@ consul:
 nodes:
   - id: bdcom1
     address: 10.255.246.173
+    priority: 1
     ssh:
       user: root
       key_path: /root/.ssh/id_rsa
@@ -21,6 +28,7 @@ nodes:
 
   - id: bdcom2
     address: 10.255.246.174
+    priority: 2
     ssh:
       user: root
       key_path: /root/.ssh/id_rsa
@@ -28,34 +36,50 @@ nodes:
     fence_cmd: "ssh root@10.255.246.174 'poweroff'"
 
 groups:
-  - id: sigtran-vip
+  - id: sigtran-failover
     resources:
-      - id: vip-sigtran
+      # Step 1: VIP assignment
+      - id: assign-vip
         type: vip
         attrs:
           ip: "10.255.246.175"
           cidr: "24"
           interface: eth0
 
+      # Step 2: Manage sigtran service (generic action)
+      - id: manage-sigtran
+        type: action
+        attrs:
+          activate: "lxc exec sigtran-bdcom -- /opt/sigtran/start.sh"
+          deactivate: "lxc exec sigtran-bdcom -- /opt/sigtran/stop.sh"
+          check: "lxc exec sigtran-bdcom -- curl -sf http://127.0.0.1:8284/pinginfo | grep -q sctpUp"
+          timeout: "30s"
+
+      # Step 3: Notify routesphere
+      - id: notify-rs
+        type: action
+        attrs:
+          activate: "curl -sf -X POST http://10.10.199.200:19999/api/ha/promoted"
+          deactivate: "curl -sf -X POST http://10.10.199.200:19999/api/ha/demoted"
+
     checks:
-      - name: sigtran-process
-        type: script
-        target: "pgrep -f 'sigtran.*jar'"
-        expect: "[0-9]"
+      # Cluster-scope: all nodes check the VIP (for SDOWN/ODOWN)
+      - name: sigtran-health
+        type: http
+        target: "http://10.255.246.175:8284/pinginfo"
+        expect: '"sctpUp":true'
         interval: 5s
         timeout: 3s
+        scope: cluster
 
-      - name: redis-sentinel
-        type: tcp
-        target: "127.0.0.1:26380"
-        interval: 10s
+      # Self-scope: each node checks its own readiness (for candidate selection)
+      - name: local-sigtran
+        type: script
+        target: "lxc exec sigtran-bdcom -- curl -sf http://127.0.0.1:8284/pinginfo"
+        expect: "sctpUp"
+        interval: 5s
         timeout: 3s
-
-      - name: kafka-broker
-        type: tcp
-        target: "127.0.0.1:9092"
-        interval: 10s
-        timeout: 3s
+        scope: self
 
       - name: routesphere-health
         type: http
@@ -63,3 +87,4 @@ groups:
         expect: "UP"
         interval: 10s
         timeout: 5s
+        scope: self

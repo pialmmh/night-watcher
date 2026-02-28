@@ -1,6 +1,6 @@
 cluster:
-  name: btcl-ha
-  tenant: btcl
+  name: bdcom-ha
+  tenant: bdcom
   quorum: 2
   fence_timeout: 30s
 
@@ -11,32 +11,32 @@ consul:
   lock_delay: 5s
 
 nodes:
-  - id: btcl-nw-1
-    alias: sbc4
-    address: 10.10.189.200
+  - id: bdcom-nw-1
+    alias: bdcom1
+    address: 10.10.199.200
     ssh:
       user: root
       key_path: /root/.ssh/id_rsa
       port: 22
-    fence_cmd: "ssh root@10.10.189.200 'poweroff'"
+    fence_cmd: "ssh root@10.10.199.200 'poweroff'"
 
-  - id: btcl-nw-2
-    alias: dell-slave
-    address: 10.10.195.200
+  - id: bdcom-nw-2
+    alias: bdcom2
+    address: 10.10.198.200
     ssh:
       user: root
       key_path: /root/.ssh/id_rsa
       port: 22
-    fence_cmd: "ssh root@10.10.195.200 'poweroff'"
+    fence_cmd: "ssh root@10.10.198.200 'poweroff'"
 
-  - id: btcl-nw-3
-    alias: sbc1
-    address: 10.10.194.200
+  - id: bdcom-nw-3
+    alias: bdcom3
+    address: 10.10.197.200
     ssh:
       user: root
       key_path: /root/.ssh/id_rsa
       port: 22
-    fence_cmd: "ssh root@10.10.194.200 'poweroff'"
+    fence_cmd: "ssh root@10.10.197.200 'poweroff'"
 
 groups:
   - id: sigtran-vip

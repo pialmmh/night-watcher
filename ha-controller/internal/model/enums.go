@@ -41,7 +41,7 @@ func (r NodeRole) String() string {
 	return "unknown"
 }
 
-func (r NodeRole) MarshalJSON() ([]byte, error)  { return json.Marshal(r.String()) }
+func (r NodeRole) MarshalJSON() ([]byte, error)      { return json.Marshal(r.String()) }
 func (r NodeRole) MarshalYAML() (interface{}, error) { return r.String(), nil }
 
 func (r *NodeRole) UnmarshalJSON(b []byte) error {
@@ -74,7 +74,7 @@ func (r *NodeRole) UnmarshalYAML(value *yaml.Node) error {
 type ClusterState int
 
 const (
-	ClusterStateUnknown  ClusterState = iota
+	ClusterStateUnknown ClusterState = iota
 	ClusterStateHealthy
 	ClusterStateDegraded
 	ClusterStateCritical
@@ -104,7 +104,7 @@ func (s ClusterState) String() string {
 	return "unknown"
 }
 
-func (s ClusterState) MarshalJSON() ([]byte, error)  { return json.Marshal(s.String()) }
+func (s ClusterState) MarshalJSON() ([]byte, error)      { return json.Marshal(s.String()) }
 func (s ClusterState) MarshalYAML() (interface{}, error) { return s.String(), nil }
 
 func (s *ClusterState) UnmarshalJSON(b []byte) error {
@@ -158,7 +158,7 @@ func (f FailoverStrategy) String() string {
 	return "active-standby"
 }
 
-func (f FailoverStrategy) MarshalJSON() ([]byte, error)  { return json.Marshal(f.String()) }
+func (f FailoverStrategy) MarshalJSON() ([]byte, error)      { return json.Marshal(f.String()) }
 func (f FailoverStrategy) MarshalYAML() (interface{}, error) { return f.String(), nil }
 
 func (f *FailoverStrategy) UnmarshalJSON(b []byte) error {
@@ -218,7 +218,7 @@ func (c ContainerType) String() string {
 	return "process"
 }
 
-func (c ContainerType) MarshalJSON() ([]byte, error)  { return json.Marshal(c.String()) }
+func (c ContainerType) MarshalJSON() ([]byte, error)      { return json.Marshal(c.String()) }
 func (c ContainerType) MarshalYAML() (interface{}, error) { return c.String(), nil }
 
 func (c *ContainerType) UnmarshalJSON(b []byte) error {
@@ -278,7 +278,7 @@ func (c CheckType) String() string {
 	return "ping"
 }
 
-func (c CheckType) MarshalJSON() ([]byte, error)  { return json.Marshal(c.String()) }
+func (c CheckType) MarshalJSON() ([]byte, error)      { return json.Marshal(c.String()) }
 func (c CheckType) MarshalYAML() (interface{}, error) { return c.String(), nil }
 
 func (c *CheckType) UnmarshalJSON(b []byte) error {
@@ -344,7 +344,7 @@ func (e EventType) String() string {
 	return "failover"
 }
 
-func (e EventType) MarshalJSON() ([]byte, error)  { return json.Marshal(e.String()) }
+func (e EventType) MarshalJSON() ([]byte, error)      { return json.Marshal(e.String()) }
 func (e EventType) MarshalYAML() (interface{}, error) { return e.String(), nil }
 
 func (e *EventType) UnmarshalJSON(b []byte) error {

@@ -11,11 +11,11 @@ import (
 
 // Client wraps the Consul API client with HA-specific operations.
 type Client struct {
-	api    *consulapi.Client
-	kv     *consulapi.KV
+	api     *consulapi.Client
+	kv      *consulapi.KV
 	session *consulapi.Session
-	logger *slog.Logger
-	cfg    config.ConsulConfig
+	logger  *slog.Logger
+	cfg     config.ConsulConfig
 }
 
 // NewClient creates a Consul client from the HA controller config.
@@ -108,4 +108,53 @@ func (c *Client) GetKV(key string) (string, error) {
 		return "", nil
 	}
 	return string(pair.Value), nil
+}
+
+// GetKVWithIndex reads a value and its ModifyIndex for CAS operations.
+func (c *Client) GetKVWithIndex(key string) (string, uint64, error) {
+	pair, _, err := c.kv.Get(key, nil)
+	if err != nil {
+		return "", 0, fmt.Errorf("consul kv get %s: %w", key, err)
+	}
+	if pair == nil {
+		return "", 0, nil
+	}
+	return string(pair.Value), pair.ModifyIndex, nil
+}
+
+// CAS performs a Check-And-Set operation on a key. Returns true if the write succeeded
+// (the ModifyIndex matched). Used for failover epoch to prevent double failover.
+func (c *Client) CAS(key, value string, modifyIndex uint64) (bool, error) {
+	p := &consulapi.KVPair{
+		Key:         key,
+		Value:       []byte(value),
+		ModifyIndex: modifyIndex,
+	}
+	success, _, err := c.kv.CAS(p, nil)
+	if err != nil {
+		return false, fmt.Errorf("consul kv cas %s: %w", key, err)
+	}
+	return success, nil
+}
+
+// ListKVPrefix reads all keys under a prefix. Returns a map of key → value.
+func (c *Client) ListKVPrefix(prefix string) (map[string]string, error) {
+	pairs, _, err := c.kv.List(prefix, nil)
+	if err != nil {
+		return nil, fmt.Errorf("consul kv list %s: %w", prefix, err)
+	}
+	result := make(map[string]string, len(pairs))
+	for _, p := range pairs {
+		result[p.Key] = string(p.Value)
+	}
+	return result, nil
+}
+
+// DeleteKV deletes a key from the Consul KV store.
+func (c *Client) DeleteKV(key string) error {
+	_, err := c.kv.Delete(key, nil)
+	if err != nil {
+		return fmt.Errorf("consul kv delete %s: %w", key, err)
+	}
+	return nil
 }

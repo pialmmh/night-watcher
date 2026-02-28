@@ -55,8 +55,8 @@ func NewBaseNode(id, address string, exec executor.Executor, logger *slog.Logger
 	return n
 }
 
-func (n *BaseNode) ID() string      { return n.id }
-func (n *BaseNode) Address() string  { return n.address }
+func (n *BaseNode) ID() string                  { return n.id }
+func (n *BaseNode) Address() string             { return n.address }
 func (n *BaseNode) Executor() executor.Executor { return n.exec }
 
 func (n *BaseNode) Reachable() bool {

@@ -237,7 +237,7 @@ if [ "${hactl_enabled:-false}" = "true" ]; then
     export HACTL_NODE_ID="${hactl_node_id}"
 
     if [ -f "$CONFIG_DIR/ha-controller.yml" ]; then
-        cp "$CONFIG_DIR/ha-controller.yml" /config/ha-controller.yml
+        cp -n "$CONFIG_DIR/ha-controller.yml" /config/ha-controller.yml 2>/dev/null || true
         echo "HA Controller: enabled, node=$HACTL_NODE_ID"
     else
         echo "WARNING: hactl_enabled=true but no ha-controller.yml found in $CONFIG_DIR"

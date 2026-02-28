@@ -18,10 +18,16 @@ type Config struct {
 
 // ClusterConfig holds cluster-wide settings.
 type ClusterConfig struct {
-	Name     string        `yaml:"name"`
-	Tenant   string        `yaml:"tenant"`
-	Quorum   int           `yaml:"quorum"`
-	FenceTimeout Duration  `yaml:"fence_timeout"`
+	Name             string   `yaml:"name"`
+	Tenant           string   `yaml:"tenant"`
+	Quorum           int      `yaml:"quorum"`
+	FenceTimeout     Duration `yaml:"fence_timeout"`
+	FailThreshold    int      `yaml:"fail_threshold"`    // consecutive failures before SDOWN (default 3)
+	CheckInterval    Duration `yaml:"check_interval"`    // sentinel check interval (default 5s)
+	AutoFailback     bool     `yaml:"auto_failback"`     // automatic failback (default false)
+	MaxFailovers     int      `yaml:"max_failovers"`     // max failovers in window (default 3)
+	FailoverWindow   Duration `yaml:"failover_window"`   // window for max_failovers (default 1h)
+	ObservationStale Duration `yaml:"observation_stale"` // stale observation threshold (default 30s)
 }
 
 // ConsulConfig holds Consul connection settings.
@@ -35,10 +41,11 @@ type ConsulConfig struct {
 
 // NodeConfig describes a cluster node.
 type NodeConfig struct {
-	ID       string `yaml:"id"`
-	Address  string `yaml:"address"`
+	ID       string     `yaml:"id"`
+	Address  string     `yaml:"address"`
 	SSH      *SSHConfig `yaml:"ssh,omitempty"`
-	FenceCmd string `yaml:"fence_cmd,omitempty"`
+	FenceCmd string     `yaml:"fence_cmd,omitempty"`
+	Priority int        `yaml:"priority,omitempty"` // lower = higher priority, default: array index + 1
 }
 
 // SSHConfig holds SSH connection details for remote nodes.
@@ -70,6 +77,7 @@ type CheckConfig struct {
 	Expect   string   `yaml:"expect,omitempty"`
 	Interval Duration `yaml:"interval"`
 	Timeout  Duration `yaml:"timeout"`
+	Scope    string   `yaml:"scope,omitempty"` // "cluster" (default) or "self"
 }
 
 // Duration wraps time.Duration for YAML unmarshalling from strings like "10s".
@@ -129,7 +137,8 @@ func (c *Config) Validate() error {
 	}
 
 	nodeIDs := make(map[string]bool)
-	for _, n := range c.Nodes {
+	for i := range c.Nodes {
+		n := &c.Nodes[i]
 		if n.ID == "" {
 			return fmt.Errorf("node.id is required")
 		}
@@ -140,11 +149,17 @@ func (c *Config) Validate() error {
 			return fmt.Errorf("duplicate node id %q", n.ID)
 		}
 		nodeIDs[n.ID] = true
+		// Default priority: array index + 1
+		if n.Priority == 0 {
+			n.Priority = i + 1
+		}
 	}
 
 	if len(c.Groups) == 0 {
 		return fmt.Errorf("at least 1 resource group required")
 	}
+
+	validResourceTypes := map[string]bool{"vip": true, "noop": true, "action": true}
 
 	for _, g := range c.Groups {
 		if g.ID == "" {
@@ -160,6 +175,14 @@ func (c *Config) Validate() error {
 			if r.Type == "" {
 				return fmt.Errorf("group %s: resource %s: type is required", g.ID, r.ID)
 			}
+			if !validResourceTypes[r.Type] {
+				return fmt.Errorf("group %s: resource %s: invalid type %q (want vip, noop, action)", g.ID, r.ID, r.Type)
+			}
+			if r.Type == "action" {
+				if r.Attrs["activate"] == "" {
+					return fmt.Errorf("group %s: resource %s: action type requires 'activate' attr", g.ID, r.ID)
+				}
+			}
 		}
 		for _, ch := range g.Checks {
 			if ch.Name == "" {
@@ -168,17 +191,45 @@ func (c *Config) Validate() error {
 			if ch.Type == "" {
 				return fmt.Errorf("group %s: check %s: type is required", g.ID, ch.Name)
 			}
-			validTypes := map[string]bool{"ping": true, "tcp": true, "http": true, "script": true}
-			if !validTypes[ch.Type] {
+			validCheckTypes := map[string]bool{"ping": true, "tcp": true, "http": true, "script": true}
+			if !validCheckTypes[ch.Type] {
 				return fmt.Errorf("group %s: check %s: invalid type %q (want ping, tcp, http, script)", g.ID, ch.Name, ch.Type)
 			}
 			if ch.Type == "script" && ch.Expect == "" {
 				return fmt.Errorf("group %s: check %s: script type requires expect", g.ID, ch.Name)
 			}
+			if ch.Scope != "" && ch.Scope != "cluster" && ch.Scope != "self" {
+				return fmt.Errorf("group %s: check %s: invalid scope %q (want cluster, self)", g.ID, ch.Name, ch.Scope)
+			}
 		}
 	}
 
+	// Apply defaults.
+	c.applyDefaults()
+
 	return nil
+}
+
+// applyDefaults sets default values for unset fields.
+func (c *Config) applyDefaults() {
+	if c.Cluster.FailThreshold == 0 {
+		c.Cluster.FailThreshold = 3
+	}
+	if c.Cluster.CheckInterval.Duration == 0 {
+		c.Cluster.CheckInterval.Duration = 5 * time.Second
+	}
+	if c.Cluster.MaxFailovers == 0 {
+		c.Cluster.MaxFailovers = 3
+	}
+	if c.Cluster.FailoverWindow.Duration == 0 {
+		c.Cluster.FailoverWindow.Duration = 1 * time.Hour
+	}
+	if c.Cluster.ObservationStale.Duration == 0 {
+		c.Cluster.ObservationStale.Duration = 30 * time.Second
+	}
+	if c.Cluster.Quorum == 0 {
+		c.Cluster.Quorum = len(c.Nodes)/2 + 1
+	}
 }
 
 // FindNode returns the NodeConfig for the given node ID, or an error if not found.

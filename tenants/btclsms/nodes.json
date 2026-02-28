@@ -1,0 +1,5 @@
+[
+  {"id": "sbc4",       "nodeId": "btcl-nw-1", "url": "/api/hactl/sbc4/status"},
+  {"id": "dell-slave", "nodeId": "btcl-nw-2", "url": "/api/hactl/dell-slave/status"},
+  {"id": "sbc1",       "nodeId": "btcl-nw-3", "url": "/api/hactl/sbc1/status"}
+]

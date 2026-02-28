@@ -1,0 +1,5 @@
+[
+  {"id": "bdcom1", "nodeId": "bdcom-nw-1", "url": "/api/hactl/bdcom1/status"},
+  {"id": "bdcom2", "nodeId": "bdcom-nw-2", "url": "/api/hactl/bdcom2/status"},
+  {"id": "bdcom3", "nodeId": "bdcom-nw-3", "url": "/api/hactl/bdcom3/status"}
+]

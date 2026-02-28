@@ -79,9 +79,9 @@ func (c *TcpCheck) Run() CheckResult {
 
 // HttpCheck verifies an HTTP endpoint, optionally checking the response body.
 type HttpCheck struct {
-	name   string
-	url    string
-	expect string // substring to look for in response body (empty = just check 2xx)
+	name    string
+	url     string
+	expect  string // substring to look for in response body (empty = just check 2xx)
 	timeout time.Duration
 }
 

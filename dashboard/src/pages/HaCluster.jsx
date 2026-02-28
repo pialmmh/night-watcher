@@ -18,12 +18,19 @@ import StarBorderIcon from '@mui/icons-material/StarBorder';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SettingsEthernetIcon from '@mui/icons-material/SettingsEthernet';
 
-// Node endpoints — each hactl instance has its own API port
-const NODE_ENDPOINTS = [
-  { id: 'node1', url: '/api/hactl/node1/status' },
-  { id: 'node2', url: '/api/hactl/node2/status' },
-  { id: 'node3', url: '/api/hactl/node3/status' },
+// Fallback node endpoints (used if /api/hactl/nodes.json is unavailable)
+const DEFAULT_ENDPOINTS = [
+  { id: 'sbc4',       nodeId: 'btcl-nw-1', url: '/api/hactl/sbc4/status' },
+  { id: 'dell-slave', nodeId: 'btcl-nw-2', url: '/api/hactl/dell-slave/status' },
+  { id: 'sbc1',       nodeId: 'btcl-nw-3', url: '/api/hactl/sbc1/status' },
 ];
+
+// Build alias lookup from endpoints list
+const buildAliasMap = (endpoints) =>
+  Object.fromEntries(endpoints.map(ep => [ep.nodeId, ep.id]));
+
+let cachedAliasMap = buildAliasMap(DEFAULT_ENDPOINTS);
+const resolveAlias = (nodeId) => cachedAliasMap[nodeId] || nodeId;
 
 const STATE_CONFIG = {
   LEADER:   { color: 'success', label: 'Leader',       icon: <StarIcon sx={{ fontSize: 18 }} /> },
@@ -50,7 +57,7 @@ const RESOURCE_STATE_CONFIG = {
 
 function ClusterOverview({ nodes }) {
   const leader = nodes.find(n => n.data?.state === 'LEADER');
-  const leaderName = leader?.data?.leader || leader?.data?.nodeId || 'No leader';
+  const leaderName = resolveAlias(leader?.data?.leader || leader?.data?.nodeId) || 'No leader';
   const totalNodes = nodes.length;
   const onlineNodes = nodes.filter(n => n.data && !n.error).length;
   const clusterHealthy = onlineNodes === totalNodes && leader;
@@ -143,7 +150,7 @@ function NodeCard({ nodeInfo }) {
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
           <Stack direction="row" alignItems="center" spacing={1}>
             {stateConf.icon}
-            <Typography variant="body1" fontWeight={700}>{data.nodeId}</Typography>
+            <Typography variant="body1" fontWeight={700}>{resolveAlias(data.nodeId)}</Typography>
             <Chip
               label={stateConf.label}
               color={stateConf.color}
@@ -161,7 +168,7 @@ function NodeCard({ nodeInfo }) {
         )}
         {data.state === 'FOLLOWER' && (
           <Alert severity="info" icon={<SwapHorizIcon />} sx={{ py: 0, mb: 1, '& .MuiAlert-message': { py: 0.5 } }}>
-            Standby — leader: <strong>{data.leader || 'unknown'}</strong>
+            Standby — leader: <strong>{resolveAlias(data.leader) || 'unknown'}</strong>
           </Alert>
         )}
 
@@ -267,11 +274,25 @@ export default function HaCluster() {
   const [nodes, setNodes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [endpoints, setEndpoints] = useState(DEFAULT_ENDPOINTS);
+
+  // Load tenant-specific node endpoints once
+  useEffect(() => {
+    fetch('/api/hactl/nodes.json')
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setEndpoints(data);
+          cachedAliasMap = buildAliasMap(data);
+        }
+      })
+      .catch(() => {}); // fall back to DEFAULT_ENDPOINTS
+  }, []);
 
   const fetchAllNodes = useCallback(async () => {
     setLoading(true);
     const results = await Promise.allSettled(
-      NODE_ENDPOINTS.map(async (ep) => {
+      endpoints.map(async (ep) => {
         const res = await fetch(ep.url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -283,13 +304,13 @@ export default function HaCluster() {
       if (result.status === 'fulfilled') {
         return result.value;
       }
-      return { id: NODE_ENDPOINTS[i].id, data: null, error: 'Unreachable' };
+      return { id: endpoints[i].id, data: null, error: 'Unreachable' };
     });
 
     setNodes(nodeStates);
     setLastUpdate(new Date());
     setLoading(false);
-  }, []);
+  }, [endpoints]);
 
   useEffect(() => { fetchAllNodes(); }, [fetchAllNodes]);
 

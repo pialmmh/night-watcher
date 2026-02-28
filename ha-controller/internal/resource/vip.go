@@ -13,13 +13,13 @@ import (
 // VipResource manages a floating virtual IP address.
 // It adds/removes the IP from a network interface and sends gratuitous ARPs.
 type VipResource struct {
-	id        string
-	ip        string
-	cidr      int
-	iface     string
-	exec      executor.Executor
-	state     ResourceState
-	logger    *slog.Logger
+	id         string
+	ip         string
+	cidr       int
+	iface      string
+	exec       executor.Executor
+	state      ResourceState
+	logger     *slog.Logger
 	cmdTimeout time.Duration
 }
 
@@ -49,8 +49,8 @@ func NewVipResource(id, ip string, cidr int, iface string, exec executor.Executo
 	return v
 }
 
-func (v *VipResource) ID() string   { return v.id }
-func (v *VipResource) Type() string { return "vip" }
+func (v *VipResource) ID() string            { return v.id }
+func (v *VipResource) Type() string          { return "vip" }
 func (v *VipResource) Status() ResourceState { return v.state }
 
 func (v *VipResource) ipCidr() string {

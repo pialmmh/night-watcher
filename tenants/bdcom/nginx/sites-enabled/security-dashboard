@@ -1,4 +1,4 @@
-# Security Dashboard - Night-Watcher
+# Security Dashboard - Night-Watcher (BDCOM)
 # Serves React SPA + proxies API calls to backend services
 
 server {
@@ -34,14 +34,14 @@ server {
     }
 
     # Proxy to HA Controller status API (per-node, keyed by server alias)
-    location /api/hactl/sbc4/ {
-        proxy_pass http://10.10.189.200:7102/;
+    location /api/hactl/bdcom1/ {
+        proxy_pass http://10.10.199.200:7102/;
     }
-    location /api/hactl/dell-slave/ {
-        proxy_pass http://10.10.195.200:7102/;
+    location /api/hactl/bdcom2/ {
+        proxy_pass http://10.10.198.200:7102/;
     }
-    location /api/hactl/sbc1/ {
-        proxy_pass http://10.10.194.200:7102/;
+    location /api/hactl/bdcom3/ {
+        proxy_pass http://10.10.197.200:7102/;
     }
 
     # Serve tenant-specific node config for dashboard
