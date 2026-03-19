@@ -8,8 +8,15 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LockResetIcon from '@mui/icons-material/LockReset';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import BadgeIcon from '@mui/icons-material/Badge';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../auth/AuthContext';
-import { listUsers, createUser, updateUser, deleteUser, resetUserPassword } from '../auth/keycloak';
+import {
+  listUsers, createUser, updateUser, deleteUser, resetUserPassword,
+  getUserRoles, getAvailableUserRoles, assignUserRoles, removeUserRoles, logoutUser,
+} from '../auth/keycloak';
+
+const SYSTEM_ROLES = ['default-roles-night-watcher', 'uma_authorization', 'offline_access'];
 
 export default function UserManagement() {
   const { getToken } = useAuth();
@@ -28,6 +35,12 @@ export default function UserManagement() {
 
   // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // Role assignment
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [roleUser, setRoleUser] = useState(null);
+  const [userRolesAssigned, setUserRolesAssigned] = useState([]);
+  const [userRolesAvailable, setUserRolesAvailable] = useState([]);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -120,6 +133,46 @@ export default function UserManagement() {
     }
   };
 
+  const openRoles = async (u) => {
+    setRoleUser(u);
+    setRoleDialogOpen(true);
+    try {
+      const token = await getToken();
+      const [assigned, available] = await Promise.all([
+        getUserRoles(token, u.id),
+        getAvailableUserRoles(token, u.id),
+      ]);
+      setUserRolesAssigned(assigned.filter(r => !SYSTEM_ROLES.includes(r.name)));
+      setUserRolesAvailable(available.filter(r => !SYSTEM_ROLES.includes(r.name)));
+    } catch (err) { setError(err.message); }
+  };
+
+  const handleAssignRole = async (role) => {
+    try {
+      const token = await getToken();
+      await assignUserRoles(token, roleUser.id, [role]);
+      setUserRolesAssigned(prev => [...prev, role]);
+      setUserRolesAvailable(prev => prev.filter(r => r.id !== role.id));
+    } catch (err) { setError(err.message); }
+  };
+
+  const handleRemoveRole = async (role) => {
+    try {
+      const token = await getToken();
+      await removeUserRoles(token, roleUser.id, [role]);
+      setUserRolesAvailable(prev => [...prev, role]);
+      setUserRolesAssigned(prev => prev.filter(r => r.id !== role.id));
+    } catch (err) { setError(err.message); }
+  };
+
+  const handleLogoutUser = async (u) => {
+    try {
+      const token = await getToken();
+      await logoutUser(token, u.id);
+      setError(null);
+    } catch (err) { setError(err.message); }
+  };
+
   return (
     <>
       <Typography variant="h5" fontWeight={600} gutterBottom>User Management</Typography>
@@ -165,8 +218,10 @@ export default function UserManagement() {
                     <Chip label={u.enabled ? 'Yes' : 'No'} size="small" color={u.enabled ? 'success' : 'default'} variant="outlined" />
                   </TableCell>
                   <TableCell align="right">
+                    <Tooltip title="Roles"><IconButton size="small" color="primary" onClick={() => openRoles(u)}><BadgeIcon fontSize="small" /></IconButton></Tooltip>
                     <Tooltip title="Edit"><IconButton size="small" onClick={() => openEdit(u)}><EditIcon fontSize="small" /></IconButton></Tooltip>
                     <Tooltip title="Reset Password"><IconButton size="small" onClick={() => openResetPassword(u)}><LockResetIcon fontSize="small" /></IconButton></Tooltip>
+                    <Tooltip title="Logout"><IconButton size="small" onClick={() => handleLogoutUser(u)}><LogoutIcon fontSize="small" /></IconButton></Tooltip>
                     <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => setDeleteTarget(u)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
                   </TableCell>
                 </TableRow>
@@ -259,6 +314,31 @@ export default function UserManagement() {
         <DialogActions>
           <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
           <Button variant="contained" color="error" onClick={handleDelete}>Delete</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Role Assignment Dialog */}
+      <Dialog open={roleDialogOpen} onClose={() => setRoleDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Roles: {roleUser?.username}</DialogTitle>
+        <DialogContent>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Assigned Roles</Typography>
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 2, minHeight: 28 }}>
+            {userRolesAssigned.length === 0 && <Typography variant="caption">No roles assigned</Typography>}
+            {userRolesAssigned.map(r => (
+              <Chip key={r.id} label={r.name} size="small" color="primary" onDelete={() => handleRemoveRole(r)} />
+            ))}
+          </Box>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Available Roles</Typography>
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', minHeight: 28 }}>
+            {userRolesAvailable.length === 0 && <Typography variant="caption">No more roles available</Typography>}
+            {userRolesAvailable.map(r => (
+              <Chip key={r.id} label={r.name} size="small" variant="outlined" onClick={() => handleAssignRole(r)}
+                sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'primary.50' } }} />
+            ))}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setRoleDialogOpen(false)} size="small">Close</Button>
         </DialogActions>
       </Dialog>
     </>

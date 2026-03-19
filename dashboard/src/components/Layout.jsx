@@ -20,6 +20,11 @@ import ApiIcon from '@mui/icons-material/Api';
 import PolicyIcon from '@mui/icons-material/Policy';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import BadgeIcon from '@mui/icons-material/Badge';
+import EventNoteIcon from '@mui/icons-material/EventNote';
+import DesktopWindowsIcon from '@mui/icons-material/DesktopWindows';
+import TuneIcon from '@mui/icons-material/Tune';
+import AppsIcon from '@mui/icons-material/Apps';
 import { useAuth } from '../auth/AuthContext';
 
 const DRAWER_WIDTH = 220;
@@ -40,6 +45,15 @@ const GATEWAY_ITEMS = [
   { label: 'Policies', path: '/gateway/policies', icon: <PolicyIcon /> },
   { label: 'Audit Logs', path: '/gateway/audit', icon: <ReceiptLongIcon /> },
   { label: 'Keycloak', path: '/gateway/keycloak', icon: <VpnKeyIcon /> },
+];
+
+const IDENTITY_ITEMS = [
+  { label: 'Users', path: '/users', icon: <PeopleIcon /> },
+  { label: 'Roles', path: '/roles', icon: <BadgeIcon /> },
+  { label: 'Clients', path: '/clients', icon: <AppsIcon /> },
+  { label: 'Sessions', path: '/sessions', icon: <DesktopWindowsIcon /> },
+  { label: 'Events', path: '/events', icon: <EventNoteIcon /> },
+  { label: 'Realm Settings', path: '/realm', icon: <TuneIcon /> },
 ];
 
 export default function Layout({ children }) {
@@ -91,6 +105,27 @@ export default function Layout({ children }) {
           </ListItemButton>
         ))}
       </List>
+      {isAdmin && (
+        <>
+          <Divider />
+          <Typography variant="overline" sx={{ px: 2, pt: 1, color: 'text.disabled', fontSize: 10 }}>
+            Identity
+          </Typography>
+          <List dense>
+            {IDENTITY_ITEMS.map((item) => (
+              <ListItemButton
+                key={item.path}
+                selected={location.pathname === item.path}
+                onClick={() => { navigate(item.path); setMobileOpen(false); }}
+                sx={{ py: 0.5 }}
+              >
+                <ListItemIcon sx={{ minWidth: 36 }}>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: 13 }} />
+              </ListItemButton>
+            ))}
+          </List>
+        </>
+      )}
       <Divider />
       <List>
         <ListItemButton
@@ -100,15 +135,6 @@ export default function Layout({ children }) {
           <ListItemIcon sx={{ minWidth: 36 }}><PersonIcon /></ListItemIcon>
           <ListItemText primary="Profile" />
         </ListItemButton>
-        {isAdmin && (
-          <ListItemButton
-            selected={location.pathname === '/users'}
-            onClick={() => { navigate('/users'); setMobileOpen(false); }}
-          >
-            <ListItemIcon sx={{ minWidth: 36 }}><PeopleIcon /></ListItemIcon>
-            <ListItemText primary="Users" />
-          </ListItemButton>
-        )}
         <ListItemButton onClick={handleLogout}>
           <ListItemIcon sx={{ minWidth: 36 }}><LogoutIcon /></ListItemIcon>
           <ListItemText primary="Logout" />

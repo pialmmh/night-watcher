@@ -18,6 +18,11 @@ import GatewayOverview from './pages/GatewayOverview';
 import GatewayPolicies from './pages/GatewayPolicies';
 import GatewayAudit from './pages/GatewayAudit';
 import KeycloakAdmin from './pages/KeycloakAdmin';
+import RoleManagement from './pages/RoleManagement';
+import SessionManagement from './pages/SessionManagement';
+import LoginEvents from './pages/LoginEvents';
+import RealmSettings from './pages/RealmSettings';
+import ClientManagement from './pages/ClientManagement';
 
 const theme = createTheme({
   palette: {
@@ -62,6 +67,21 @@ export default function App() {
                     <Route path="/gateway/policies" element={<GatewayPolicies />} />
                     <Route path="/gateway/audit" element={<GatewayAudit />} />
                     <Route path="/gateway/keycloak" element={<KeycloakAdmin />} />
+                    <Route path="/roles" element={
+                      <ProtectedRoute requireAdmin><RoleManagement /></ProtectedRoute>
+                    } />
+                    <Route path="/sessions" element={
+                      <ProtectedRoute requireAdmin><SessionManagement /></ProtectedRoute>
+                    } />
+                    <Route path="/events" element={
+                      <ProtectedRoute requireAdmin><LoginEvents /></ProtectedRoute>
+                    } />
+                    <Route path="/realm" element={
+                      <ProtectedRoute requireAdmin><RealmSettings /></ProtectedRoute>
+                    } />
+                    <Route path="/clients" element={
+                      <ProtectedRoute requireAdmin><ClientManagement /></ProtectedRoute>
+                    } />
                     <Route path="/users" element={
                       <ProtectedRoute requireAdmin>
                         <UserManagement />

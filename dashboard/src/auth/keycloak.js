@@ -208,3 +208,197 @@ export async function assignUserRoles(accessToken, userId, roles) {
   });
   if (!resp.ok) throw new Error('Failed to assign roles');
 }
+
+// Remove realm roles from user.
+export async function removeUserRoles(accessToken, userId, roles) {
+  const resp = await fetch(`${ADMIN_URL}/users/${userId}/role-mappings/realm`, {
+    method: 'DELETE',
+    headers: adminHeaders(accessToken),
+    body: JSON.stringify(roles),
+  });
+  if (!resp.ok) throw new Error('Failed to remove roles');
+}
+
+// Get available (unassigned) realm roles for user.
+export async function getAvailableUserRoles(accessToken, userId) {
+  const resp = await fetch(`${ADMIN_URL}/users/${userId}/role-mappings/realm/available`, {
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to get available roles');
+  return resp.json();
+}
+
+// --- Role Management ---
+
+export async function createRole(accessToken, roleData) {
+  const resp = await fetch(`${ADMIN_URL}/roles`, {
+    method: 'POST',
+    headers: adminHeaders(accessToken),
+    body: JSON.stringify(roleData),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.errorMessage || 'Failed to create role');
+  }
+}
+
+export async function getRole(accessToken, roleName) {
+  const resp = await fetch(`${ADMIN_URL}/roles/${roleName}`, {
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to get role');
+  return resp.json();
+}
+
+export async function updateRole(accessToken, roleName, roleData) {
+  const resp = await fetch(`${ADMIN_URL}/roles/${roleName}`, {
+    method: 'PUT',
+    headers: adminHeaders(accessToken),
+    body: JSON.stringify(roleData),
+  });
+  if (!resp.ok) throw new Error('Failed to update role');
+}
+
+export async function deleteRole(accessToken, roleName) {
+  const resp = await fetch(`${ADMIN_URL}/roles/${roleName}`, {
+    method: 'DELETE',
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to delete role');
+}
+
+export async function getRoleUsers(accessToken, roleName, first = 0, max = 50) {
+  const resp = await fetch(`${ADMIN_URL}/roles/${roleName}/users?first=${first}&max=${max}`, {
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to get role users');
+  return resp.json();
+}
+
+// --- Session Management ---
+
+export async function getUserSessions(accessToken, userId) {
+  const resp = await fetch(`${ADMIN_URL}/users/${userId}/sessions`, {
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to get user sessions');
+  return resp.json();
+}
+
+export async function logoutUser(accessToken, userId) {
+  const resp = await fetch(`${ADMIN_URL}/users/${userId}/logout`, {
+    method: 'POST',
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to logout user');
+}
+
+export async function getActiveSessions(accessToken, clientId) {
+  // Get all sessions for the nw-dashboard client
+  const clients = await listClients(accessToken);
+  const client = clients.find(c => c.clientId === (clientId || CLIENT_ID));
+  if (!client) return [];
+  const resp = await fetch(`${ADMIN_URL}/clients/${client.id}/user-sessions?max=100`, {
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to get active sessions');
+  return resp.json();
+}
+
+export async function deleteSession(accessToken, sessionId) {
+  const resp = await fetch(`${KEYCLOAK_URL}/admin/realms/${REALM}/sessions/${sessionId}`, {
+    method: 'DELETE',
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to delete session');
+}
+
+// --- Client Management ---
+
+export async function listClients(accessToken) {
+  const resp = await fetch(`${ADMIN_URL}/clients?max=100`, {
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to list clients');
+  return resp.json();
+}
+
+export async function getClient(accessToken, clientUuid) {
+  const resp = await fetch(`${ADMIN_URL}/clients/${clientUuid}`, {
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to get client');
+  return resp.json();
+}
+
+export async function createClient(accessToken, clientData) {
+  const resp = await fetch(`${ADMIN_URL}/clients`, {
+    method: 'POST',
+    headers: adminHeaders(accessToken),
+    body: JSON.stringify(clientData),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.errorMessage || 'Failed to create client');
+  }
+}
+
+export async function updateClient(accessToken, clientUuid, clientData) {
+  const resp = await fetch(`${ADMIN_URL}/clients/${clientUuid}`, {
+    method: 'PUT',
+    headers: adminHeaders(accessToken),
+    body: JSON.stringify(clientData),
+  });
+  if (!resp.ok) throw new Error('Failed to update client');
+}
+
+export async function deleteClient(accessToken, clientUuid) {
+  const resp = await fetch(`${ADMIN_URL}/clients/${clientUuid}`, {
+    method: 'DELETE',
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to delete client');
+}
+
+// --- Events ---
+
+export async function getLoginEvents(accessToken, { type, user, from, max = 50 } = {}) {
+  const params = new URLSearchParams({ max });
+  if (type) params.set('type', type);
+  if (user) params.set('user', user);
+  if (from) params.set('dateFrom', from);
+  const resp = await fetch(`${ADMIN_URL}/events?${params}`, {
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to get events');
+  return resp.json();
+}
+
+export async function getAdminEvents(accessToken, { from, max = 50 } = {}) {
+  const params = new URLSearchParams({ max });
+  if (from) params.set('dateFrom', from);
+  const resp = await fetch(`${ADMIN_URL}/admin-events?${params}`, {
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to get admin events');
+  return resp.json();
+}
+
+// --- Realm Settings ---
+
+export async function getRealmSettings(accessToken) {
+  const resp = await fetch(`${ADMIN_URL}`, {
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to get realm settings');
+  return resp.json();
+}
+
+export async function updateRealmSettings(accessToken, settings) {
+  const resp = await fetch(`${ADMIN_URL}`, {
+    method: 'PUT',
+    headers: adminHeaders(accessToken),
+    body: JSON.stringify(settings),
+  });
+  if (!resp.ok) throw new Error('Failed to update realm settings');
+}
