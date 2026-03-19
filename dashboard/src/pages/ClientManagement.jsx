@@ -88,6 +88,8 @@ export default function ClientManagement() {
       };
       if (dialogMode === 'create') {
         if (!form.clientId) throw new Error('Client ID is required');
+        if (!/^[a-zA-Z0-9._-]+$/.test(form.clientId)) throw new Error('Client ID must contain only letters, numbers, dots, hyphens, underscores');
+        if (form.clientId.length > 255) throw new Error('Client ID must be 255 characters or less');
         await createClient(token, data);
       } else {
         await updateClient(token, editingClient.id, { ...editingClient, ...data });

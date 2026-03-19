@@ -37,6 +37,14 @@ export default function RealmSettings() {
     setError(null);
     setSuccess(null);
     try {
+      // Validate numeric fields
+      if (settings.accessTokenLifespan < 30) throw new Error('Access token lifespan must be at least 30 seconds');
+      if (settings.ssoSessionMaxLifespan < 60) throw new Error('SSO session max lifespan must be at least 60 seconds');
+      if (settings.ssoSessionIdleTimeout < 60) throw new Error('SSO session idle timeout must be at least 60 seconds');
+      if (settings.failureFactor < 1) throw new Error('Max login failures must be at least 1');
+      if (settings.maxFailureWaitSeconds < 1) throw new Error('Max wait must be at least 1 second');
+      if (settings.waitIncrementSeconds < 1) throw new Error('Wait increment must be at least 1 second');
+
       const token = await getToken();
       await updateRealmSettings(token, {
         displayName: settings.displayName,

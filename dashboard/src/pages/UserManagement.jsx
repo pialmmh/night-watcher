@@ -91,7 +91,11 @@ export default function UserManagement() {
 
       if (dialogMode === 'create') {
         if (!form.username) throw new Error('Username is required');
+        if (!/^[a-zA-Z0-9._-]+$/.test(form.username)) throw new Error('Username must contain only letters, numbers, dots, hyphens, underscores');
+        if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) throw new Error('Invalid email format');
         if (!form.password || form.password.length < 8) throw new Error('Password must be at least 8 characters');
+        if (!/[A-Z]/.test(form.password)) throw new Error('Password must contain at least 1 uppercase letter');
+        if (!/[0-9]/.test(form.password)) throw new Error('Password must contain at least 1 digit');
         await createUser(token, {
           username: form.username,
           email: form.email,
@@ -101,6 +105,7 @@ export default function UserManagement() {
           credentials: [{ type: 'password', value: form.password, temporary: false }],
         });
       } else if (dialogMode === 'edit') {
+        if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) throw new Error('Invalid email format');
         await updateUser(token, editUser.id, {
           email: form.email,
           firstName: form.firstName,
@@ -109,6 +114,8 @@ export default function UserManagement() {
         });
       } else if (dialogMode === 'password') {
         if (!form.password || form.password.length < 8) throw new Error('Password must be at least 8 characters');
+        if (!/[A-Z]/.test(form.password)) throw new Error('Password must contain at least 1 uppercase letter');
+        if (!/[0-9]/.test(form.password)) throw new Error('Password must contain at least 1 digit');
         await resetUserPassword(token, editUser.id, form.password);
       }
 

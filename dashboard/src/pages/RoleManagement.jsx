@@ -84,6 +84,8 @@ export default function RoleManagement() {
       const token = await getToken();
       if (dialogMode === 'create') {
         if (!form.name) throw new Error('Role name is required');
+        if (!/^[a-zA-Z0-9_-]+$/.test(form.name)) throw new Error('Role name must contain only letters, numbers, hyphens, underscores');
+        if (form.name.length > 255) throw new Error('Role name must be 255 characters or less');
         await createRole(token, { name: form.name, description: form.description });
       } else {
         await updateRole(token, editingRole.name, { ...editingRole, description: form.description });

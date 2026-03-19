@@ -24,6 +24,18 @@ export default function Profile() {
       setMessage({ type: 'error', text: 'Password must be at least 8 characters' });
       return;
     }
+    if (!/[A-Z]/.test(newPassword)) {
+      setMessage({ type: 'error', text: 'Password must contain at least 1 uppercase letter' });
+      return;
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      setMessage({ type: 'error', text: 'Password must contain at least 1 digit' });
+      return;
+    }
+    if (!currentPassword) {
+      setMessage({ type: 'error', text: 'Current password is required' });
+      return;
+    }
 
     setLoading(true);
     try {
