@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.telcobright.nw</groupId>
+        <artifactId>nw-agent-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>nw-spi</artifactId>
+    <name>Night-Watcher SPI</name>
+    <description>Plugin contract interfaces. No Quarkus dependency; pure Java + Jackson annotations.</description>
+
+    <dependencies>
+        <!-- annotations only, no runtime; ~70 KB; gives SPI types nice JSON without forcing a JSON impl -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+    </dependencies>
+</project>

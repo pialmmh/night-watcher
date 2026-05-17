@@ -1,0 +1,16 @@
+quarkus:
+  application:
+    name: nw-agent
+  http:
+    port: 7102
+    host: 0.0.0.0
+  log:
+    level: INFO
+    category:
+      "com.tb.nw":
+        level: DEBUG
+
+nw:
+  agent:
+    node-name: ${NW_NODE_NAME:unknown}
+    fabric-endpoint: ${NW_FABRIC_ENDPOINT:http://127.0.0.1:2379}

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.telcobright.nw</groupId>
+        <artifactId>nw-agent-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>nw-dist</artifactId>
+    <name>Night-Watcher Distribution</name>
+    <description>Assembly module — pulls together nw-core + plugins to produce the runnable artifact and container image.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.telcobright.nw</groupId>
+            <artifactId>nw-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.telcobright.nw</groupId>
+            <artifactId>nw-mysql</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>${quarkus.platform.group-id}</groupId>
+                <artifactId>quarkus-maven-plugin</artifactId>
+                <version>${quarkus.platform.version}</version>
+                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>generate-code</goal>
+                            <goal>generate-code-tests</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>native</id>
+            <activation>
+                <property><name>native</name></property>
+            </activation>
+            <properties>
+                <quarkus.native.enabled>true</quarkus.native.enabled>
+                <quarkus.native.container-build>true</quarkus.native.container-build>
+            </properties>
+        </profile>
+    </profiles>
+</project>

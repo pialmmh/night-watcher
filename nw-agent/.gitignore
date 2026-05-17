@@ -1,0 +1,26 @@
+# Maven build output
+**/target/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local logs / dev artifacts
+*.log
+hs_err_pid*
+
+# Secrets — never commit
+.env
+.env.*
+secrets/
+*.pem
+*.key

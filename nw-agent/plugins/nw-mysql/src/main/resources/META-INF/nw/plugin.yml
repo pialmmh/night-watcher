@@ -1,0 +1,32 @@
+plugin:
+  id: nw-mysql
+  version: 1.0.0
+  service_type: mysql
+  cluster_types:
+    - MySqlMasterSlave
+  description: "MySQL HA monitoring + failover (master + N slaves)"
+  author: telcobright
+  spi_compatible: ">=1.0,<2.0"
+
+contracts:
+  facets_declared:
+    - mysql-binary-present
+    - mysql-running-here
+    - mysql-master-here
+    - mysql-slave-here
+    - mysql-client-here
+
+  roles_declared:
+    - mysql-master
+    - mysql-slave
+    - mysql-quarantined
+    - mysql-promotion-candidate
+    - mysql-bootstrap-target
+    - mysql-client
+    - witness
+
+  actions_declared: []
+  investigators_declared: []
+
+permission_matrix_defaults: {}
+resolver_policy_defaults: {}
