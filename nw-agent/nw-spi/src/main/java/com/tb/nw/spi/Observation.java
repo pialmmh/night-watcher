@@ -2,17 +2,29 @@ package com.tb.nw.spi;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
 
 /**
- * Typed evidence record published by an investigator. One Observation per
+ * Typed evidence record published by an investigator. One observation per
  * (publisher, target, investigator) per tick. Written to the fabric under the
  * agent's lease so stale entries age out automatically.
  *
- * latencyNanos is stored as a long for clean JSON round-trips; convert with
- * Duration.ofNanos() / Duration.toNanos() when needed.
+ * <p>The {@code detail} field is plugin-typed: every plugin defines its own
+ * {@link PluginEntity} record holding the fields that probe / aggregator /
+ * action implementations actually use. There is no untyped map anywhere.</p>
+ *
+ * <p>{@code pluginId} and {@code pluginVersion} are stamped on the envelope
+ * at construction time (read from {@code detail}). They appear at the top
+ * level of the serialized JSON so the framework can validate them
+ * <em>before</em> deserializing the typed body — protecting against
+ * version-mismatch payloads. Anything whose {@code pluginVersion} does not
+ * match a locally loaded plugin's descriptor is dropped at the cache layer.</p>
+ *
+ * <p>{@code latencyNanos} is a long for clean JSON round-tripping; convert
+ * with {@code Duration.ofNanos()} / {@code Duration.toNanos()} when needed.</p>
+ *
+ * @param <T> plugin-specific detail type implementing {@link PluginEntity}
  */
-public record Observation(
+public record Observation<T extends PluginEntity>(
         String cluster,
         ClusterType clusterType,
         String target,
@@ -21,20 +33,30 @@ public record Observation(
         Vantage vantage,
         HealthState state,
         long latencyNanos,
-        Map<String, Object> detail,
         Instant freshness,
-        int schemaVersion
-) {
-    public static final int CURRENT_SCHEMA_VERSION = 1;
+        String pluginId,
+        String pluginVersion,
+        T detail
+) implements PluginEntity {
 
     public Duration latency() {
         return Duration.ofNanos(latencyNanos);
     }
 
-    public static Observation of(String cluster, ClusterType clusterType,
-                                 String target, String publisher,
-                                 HealthCheck check, HealthReport report) {
-        return new Observation(
+    /**
+     * Factory that pulls {@code pluginId} / {@code pluginVersion} from the
+     * detail so the envelope and the body are guaranteed consistent.
+     */
+    public static <T extends PluginEntity> Observation<T> of(
+            String cluster, ClusterType clusterType,
+            String target, String publisher,
+            HealthCheck<T> check, HealthReport<T> report) {
+        T detail = report.detail();
+        if (detail == null) {
+            throw new IllegalArgumentException(
+                    "Observation.detail must not be null — every plugin must supply a typed detail (including UNKNOWN cases)");
+        }
+        return new Observation<>(
                 cluster,
                 clusterType,
                 target,
@@ -43,9 +65,10 @@ public record Observation(
                 check.vantage(),
                 report.state(),
                 report.latency() == null ? 0L : report.latency().toNanos(),
-                report.detail() == null ? Map.of() : report.detail(),
                 report.freshness() == null ? Instant.now() : report.freshness(),
-                CURRENT_SCHEMA_VERSION
+                detail.pluginId(),
+                detail.pluginVersion(),
+                detail
         );
     }
 }

@@ -18,5 +18,10 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
         </dependency>
+        <!-- Fabric handle exposed in ProbeContext / ActionContext so plugins can read cluster state -->
+        <dependency>
+            <groupId>com.telcobright.nw</groupId>
+            <artifactId>nw-fabric-api</artifactId>
+        </dependency>
     </dependencies>
 </project>

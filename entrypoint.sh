@@ -220,8 +220,6 @@ MYSQL_PASS=${MYSQL_PASS}
 MYSQL_DB=${MYSQL_DB}
 TENANT_NAME=${TENANT_NAME}
 OPENSEARCH_JAVA_OPTS=-Xms384m -Xmx384m
-HACTL_ENABLED=${HACTL_ENABLED:-false}
-HACTL_NODE_ID=${HACTL_NODE_ID:-none}
 ENVEOF
 chmod 600 /etc/security-bundle.env
 
@@ -230,24 +228,9 @@ if [ -f "$CONFIG_DIR/watchdog/services.conf" ]; then
     cp "$CONFIG_DIR/watchdog/services.conf" /opt/security-bundle/scripts/services.conf
 fi
 
-# ── 10b. Configure HA Controller ──────────────────────────────────────────────
-if [ "${hactl_enabled:-false}" = "true" ]; then
-    echo "Configuring HA Controller..."
-    export HACTL_ENABLED=true
-    export HACTL_NODE_ID="${hactl_node_id}"
-
-    if [ -f "$CONFIG_DIR/ha-controller.yml" ]; then
-        cp -n "$CONFIG_DIR/ha-controller.yml" /config/ha-controller.yml 2>/dev/null || true
-        echo "HA Controller: enabled, node=$HACTL_NODE_ID"
-    else
-        echo "WARNING: hactl_enabled=true but no ha-controller.yml found in $CONFIG_DIR"
-        export HACTL_ENABLED=false
-    fi
-else
-    echo "HA Controller: disabled"
-    export HACTL_ENABLED=false
-    export HACTL_NODE_ID=none
-fi
+# HA control plane (hactl + Consul) removed — replaced by the standalone
+# nw-agent at routesphere/night-watcher/nw-agent/, which runs in its own
+# container alongside this security bundle under the compose migration.
 
 # ── 11. vm.max_map_count for OpenSearch ──────────────────────────────────────
 CURRENT_MAP_COUNT=$(cat /proc/sys/vm/max_map_count 2>/dev/null || echo 0)

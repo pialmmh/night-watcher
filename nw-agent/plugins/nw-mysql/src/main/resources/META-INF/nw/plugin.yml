@@ -26,7 +26,30 @@ contracts:
     - witness
 
   actions_declared: []
-  investigators_declared: []
+
+  investigators_declared:
+    # Single active investigator in the current cut.
+    - id: mysql.remote.client
+      vantage: client
+      requires_facets: [mysql-client-here]
+      target_from: [nw.mysql.client-target-host, nw.mysql.remote-host]
+      query_from: nw.mysql.custom-query        # default "SHOW DATABASES"
+      failure_threshold: 3                     # 3 DEAD verdicts → master dead
+
+    # Dormant — source preserved, CDI scope removed. Bring back when the
+    # local-self / remote-peer vantages are re-enabled.
+    - id: mysql.local.master
+      vantage: local-self
+      status: dormant
+    - id: mysql.local.slave
+      vantage: local-self
+      status: dormant
+    - id: mysql.remote.master
+      vantage: remote-peer
+      status: dormant
+    - id: mysql.remote.slave
+      vantage: remote-peer
+      status: dormant
 
 permission_matrix_defaults: {}
 resolver_policy_defaults: {}

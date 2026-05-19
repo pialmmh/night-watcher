@@ -42,19 +42,11 @@ RUN git clone --depth 1 https://github.com/owasp-modsecurity/ModSecurity-nginx.g
 RUN git clone --depth 1 -b v4.0/main https://github.com/coreruleset/coreruleset.git /build/crs && \
     cp /build/crs/crs-setup.conf.example /build/crs/crs-setup.conf
 
-# ── Stage 2: Build ha-controller ─────────────────────────────────────────────
-FROM golang:1.21-bookworm AS go-build
-WORKDIR /build
-COPY ha-controller/go.mod ha-controller/go.sum ./
-RUN go mod download
-COPY ha-controller/ .
-RUN make build
-
 # ══════════════════════════════════════════════════════════════════════════════
 FROM debian:12-slim
 
 LABEL maintainer="telcobright" \
-      description="Night-watcher: Security bundle + HA controller"
+      description="Night-watcher security bundle (Wazuh + nginx/ModSec + CrowdSec + Fail2Ban). HA control plane lives in the separate nw-agent Quarkus build."
 
 ENV DEBIAN_FRONTEND=noninteractive \
     TERM=xterm-256color
@@ -151,9 +143,6 @@ COPY common/mysql/ /opt/security-bundle/mysql/
 COPY entrypoint.sh /entrypoint.sh
 COPY supervisord.conf /etc/supervisor/conf.d/security-bundle.conf
 
-# ── Copy hactl binary from Go build stage ─────────────────────────────────────
-COPY --from=go-build /build/bin/hactl /usr/local/bin/hactl
-
 RUN chmod +x /entrypoint.sh /opt/security-bundle/scripts/*.sh /opt/security-bundle/scripts/*.py || true
 
 # ── Tune OpenSearch for low memory ───────────────────────────────────────────
@@ -166,7 +155,6 @@ ENV OPENSEARCH_JAVA_OPTS="-Xms384m -Xmx384m"
 # 5601: Wazuh Dashboard
 # 9200: Wazuh Indexer (OpenSearch)
 # 55000: Wazuh API
-# 7102: hactl status API
-EXPOSE 80 443 1514 1515 5601 9200 55000 7102
+EXPOSE 80 443 1514 1515 5601 9200 55000
 
 ENTRYPOINT ["/entrypoint.sh"]

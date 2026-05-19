@@ -21,8 +21,8 @@ public class FabricProducer {
     @Produces
     @Singleton
     public Fabric fabric(AgentConfig cfg) {
-        LOG.infof("creating EtcdFabric: endpoint=%s, node=%s", cfg.fabricEndpoint(), cfg.nodeName());
-        return new EtcdFabric(cfg.fabricEndpoint());
+        LOG.infof("creating EtcdFabric: endpoints=%s, node=%s", cfg.fabricEndpoints(), cfg.nodeName());
+        return new EtcdFabric(cfg.fabricEndpoints());
     }
 
     public void disposeFabric(@Disposes Fabric fabric) {

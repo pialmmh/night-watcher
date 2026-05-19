@@ -10,6 +10,7 @@ import io.etcd.jetcd.Client;
 import org.jboss.logging.Logger;
 
 import java.time.Duration;
+import java.util.List;
 
 /**
  * Concrete Fabric implementation backed by an etcd cluster. Owns the jetcd
@@ -21,24 +22,37 @@ public final class EtcdFabric implements Fabric, AutoCloseable {
 
     private static final Logger LOG = Logger.getLogger(EtcdFabric.class);
 
-    private final String endpoint;
+    private final List<String> endpoints;
     private final Client client;
     private final EtcdFabricKV kv;
     private final EtcdFabricLease leases;
     private final EtcdFabricLock locks;
     private final EtcdFabricTxn txns;
 
+    /** Convenience for the single-endpoint case (smoke tests, dev). */
     public EtcdFabric(String endpoint) {
-        this.endpoint = endpoint;
-        this.client = buildClient(endpoint);
+        this(List.of(endpoint));
+    }
+
+    /**
+     * Multi-endpoint constructor. jetcd will round-robin requests across the
+     * supplied endpoints and survive a single peer being unreachable.
+     */
+    public EtcdFabric(List<String> endpoints) {
+        if (endpoints == null || endpoints.isEmpty()) {
+            throw new IllegalArgumentException("EtcdFabric requires at least one endpoint");
+        }
+        this.endpoints = List.copyOf(endpoints);
+        this.client = buildClient(this.endpoints);
         this.kv = new EtcdFabricKV(client);
         this.leases = new EtcdFabricLease(client);
         this.locks = new EtcdFabricLock(client);
         this.txns = new EtcdFabricTxn(client);
-        LOG.infof("EtcdFabric initialized against %s", endpoint);
+        LOG.infof("EtcdFabric initialized against %d endpoint(s): %s",
+                this.endpoints.size(), this.endpoints);
     }
 
-    public String endpoint() { return endpoint; }
+    public List<String> endpoints() { return endpoints; }
 
     public boolean ping() {
         return tryStatus();
@@ -59,9 +73,9 @@ public final class EtcdFabric implements Fabric, AutoCloseable {
 
     // ── helpers ──
 
-    private static Client buildClient(String endpoint) {
+    private static Client buildClient(List<String> endpoints) {
         return Client.builder()
-                .endpoints(endpoint)
+                .endpoints(endpoints.toArray(new String[0]))
                 .connectTimeout(Duration.ofSeconds(5))
                 .keepaliveTime(Duration.ofSeconds(30))
                 .build();

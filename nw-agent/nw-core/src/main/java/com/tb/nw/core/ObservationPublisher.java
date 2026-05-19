@@ -5,20 +5,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tb.nw.fabric.api.Fabric;
 import com.tb.nw.fabric.api.FabricException;
 import com.tb.nw.spi.Observation;
+import com.tb.nw.spi.PluginEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Serializes Observations as JSON and writes them to etcd under the shared
- * agent lease. Stale entries age out automatically when the agent dies.
+ * Serializes typed Observations as JSON and writes them to etcd under the
+ * shared agent lease. Stale entries age out automatically when the agent dies.
  *
- * Also keeps an in-memory map of the latest observation per investigator
+ * <p>Holds typed envelopes as {@code Observation<?>} — the publisher itself
+ * is plugin-agnostic; serialization preserves the typed detail's shape.</p>
+ *
+ * <p>Also keeps an in-memory map of the latest observation per investigator
  * published by THIS node, so the status endpoint can show what we sent
- * without re-reading from etcd.
+ * without re-reading from etcd.</p>
  */
 @ApplicationScoped
 public class ObservationPublisher {
@@ -29,9 +33,9 @@ public class ObservationPublisher {
     @Inject AgentLease lease;
     @Inject ObjectMapper json;
 
-    private final Map<String, Observation> lastByInvestigator = new ConcurrentHashMap<>();
+    private final Map<String, Observation<?>> lastByInvestigator = new ConcurrentHashMap<>();
 
-    public void publish(Observation o) {
+    public <T extends PluginEntity> void publish(Observation<T> o) {
         try {
             String key = pathFor(o);
             byte[] body = json.writeValueAsBytes(o);
@@ -44,11 +48,11 @@ public class ObservationPublisher {
         }
     }
 
-    public Map<String, Observation> snapshot() {
+    public Map<String, Observation<?>> snapshot() {
         return Map.copyOf(lastByInvestigator);
     }
 
-    private static String pathFor(Observation o) {
+    private static String pathFor(Observation<?> o) {
         return "/clusters/" + o.cluster()
                 + "/observations/" + o.target()
                 + "/" + o.publisher()

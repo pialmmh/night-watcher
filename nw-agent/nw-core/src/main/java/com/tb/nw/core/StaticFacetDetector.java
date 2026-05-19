@@ -1,6 +1,7 @@
 package com.tb.nw.core;
 
 import com.tb.nw.spi.FacetDetector;
+import com.tb.nw.spi.PluginDescriptor;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -24,6 +25,9 @@ public class StaticFacetDetector implements FacetDetector {
     );
 
     @Inject StaticFacetsConfig cfg;
+    @Inject CorePluginDescriptor descriptor;
+
+    @Override public PluginDescriptor descriptor() { return descriptor; }
 
     @Override public Set<String> declaredFacets() {
         return KNOWN_STATIC_FACETS;

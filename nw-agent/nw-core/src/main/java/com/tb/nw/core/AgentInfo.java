@@ -26,6 +26,9 @@ public class AgentInfo {
     @Inject FacetPublisher facets;
     @Inject FacetRegistry registry;
     @Inject ObservationPublisher observations;
+    @Inject ObservationCache cache;
+    @Inject com.tb.nw.core.lifecycle.AgentLifecycleMachine lifecycle;
+    @Inject com.tb.nw.core.coord.FailoverCoordinator coordinator;
     @Inject com.tb.nw.fabric.api.Fabric fabric;
 
     @GET
@@ -39,13 +42,23 @@ public class AgentInfo {
         out.put("cluster", cfg.clusterName());
         out.put("cluster_type", cfg.clusterType());
         out.put("status", state.status().name());
-        out.put("fabric_endpoint", cfg.fabricEndpoint());
+        out.put("fabric_endpoints", cfg.fabricEndpoints());
         out.put("fabric_reachable", fabricReachable());
         out.put("last_heartbeat_ok", asString(state.lastHeartbeatOk()));
         out.put("last_error", state.lastError());
         out.put("facets", facets.snapshot());
         out.put("facet_detectors", registry.detectorClassNames());
         out.put("observations_published", observations.snapshot());
+        out.put("observations_in_cache", cache.size());
+        out.put("lifecycle_phase", lifecycle.currentPhase());
+        out.put("failover_phase", coordinator.currentPhase());
+        var lastTrigger = coordinator.lastTrigger();
+        if (lastTrigger != null) {
+            out.put("last_failover_trigger", Map.of(
+                    "target", lastTrigger.target(),
+                    "investigator", lastTrigger.investigator(),
+                    "consecutive_failures", lastTrigger.consecutiveFailures()));
+        }
         return out;
     }
 

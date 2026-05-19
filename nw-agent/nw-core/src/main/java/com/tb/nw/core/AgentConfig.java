@@ -3,6 +3,8 @@ package com.tb.nw.core;
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 
+import java.util.List;
+
 /**
  * Agent-level config. Backed by Quarkus / SmallRye Config; values come from
  * application.yml and / or environment variables.
@@ -25,9 +27,16 @@ public interface AgentConfig {
     @WithDefault("Generic")
     String clusterType();
 
-    /** Local etcd client URL. */
+    /**
+     * etcd client URL(s). Single entry for dev / smoke; in production a 3- or
+     * 5-node cluster supplies the full peer list so the jetcd client can fall
+     * back if the local peer is down.
+     *
+     * Comma-separated in env var form, e.g.
+     * {@code NW_AGENT_FABRIC_ENDPOINTS=http://10.0.0.1:2379,http://10.0.0.2:2379,http://10.0.0.3:2379}.
+     */
     @WithDefault("http://127.0.0.1:2379")
-    String fabricEndpoint();
+    List<String> fabricEndpoints();
 
     /** Heartbeat publishing interval (seconds). */
     @WithDefault("5")

@@ -1,0 +1,108 @@
+# Night-Watcher — docker-compose deployment (skeleton)
+#
+# Status: ENTRY POINT, NOT YET FULLY WIRED. Tracks the migration from the
+# legacy "all-in-one LXC container" model (supervisord + 11 processes inside
+# one container, image telcobright/security-bundle) to a multi-service
+# compose stack where each concern runs in its own container.
+#
+# See docs/docker-compose-migration.md for the migration plan and what still
+# needs to land for each service.
+#
+# Usage (after the migration is complete):
+#   cd /etc/night-watcher
+#   docker compose --env-file ./tenant.env up -d
+#
+# Each tenant supplies its own ./tenant.env (analogous to today's
+# tenants/<tenant>/tenant.conf), plus mounts ./config/ overlays for nginx,
+# wazuh, crowdsec, fail2ban, modsecurity from tenants/<tenant>/.
+
+name: night-watcher
+
+# Shared internal network — fixed subnet so we can put nw-agent's etcd
+# endpoint in a predictable place per host.
+networks:
+  nw:
+    driver: bridge
+
+# Named volumes — persistent state that must survive container restart.
+volumes:
+  etcd-data:           # bundled etcd Raft log + snapshots — losing this loses cluster state
+  wazuh-manager-data:
+  wazuh-indexer-data:
+  nginx-ssl:
+
+services:
+
+  # ── nw-agent control plane ───────────────────────────────────────────────
+  # Built from nw-agent/ (Quarkus + JDK 21 + bundled etcd via jetcd).
+  # In production this becomes one of N peers forming the etcd cluster
+  # across tenant hosts; here it's a single-instance placeholder.
+  nw-agent:
+    # build: ./nw-agent              # uncomment when nw-agent/Dockerfile lands
+    image: telcobright/nw-agent:dev   # placeholder tag
+    container_name: nw-agent
+    restart: unless-stopped
+    network_mode: host                # etcd peer + agent share the host port-namespace
+    environment:
+      NW_NODE_NAME: ${NW_NODE_NAME:-nw-1}
+      NW_AGENT_CLUSTER_NAME: ${NW_AGENT_CLUSTER_NAME:-default}
+      NW_AGENT_CLUSTER_TYPE: ${NW_AGENT_CLUSTER_TYPE:-Generic}
+      NW_AGENT_FABRIC_ENDPOINTS: ${NW_AGENT_FABRIC_ENDPOINTS:-http://127.0.0.1:2379}
+      # nw.mysql.* / nw.failover.* etc. wired via the env file
+    volumes:
+      - etcd-data:/var/lib/nw/fabric
+
+  # ── Security bundle (transitional) ───────────────────────────────────────
+  # The existing telcobright/security-bundle image — Wazuh + nginx/ModSec +
+  # CrowdSec + Fail2Ban + the helper Python scripts. Today the hactl/Consul
+  # parts are stripped (see supervisord.conf). When the per-service split
+  # below is complete this whole block goes away.
+  security-bundle:
+    image: telcobright/security-bundle:latest
+    container_name: security-bundle
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ${CONFIG_DIR:-./tenants/btclsms}:/config:ro
+      - wazuh-manager-data:/var/ossec/data
+      - wazuh-indexer-data:/var/lib/wazuh-indexer
+      - nginx-ssl:/etc/nginx/ssl
+    environment:
+      TENANT_CONFIG: /config/tenant.conf
+
+  # ── PER-SERVICE SPLIT — uncomment as each migrates out of security-bundle ──
+  #
+  # The target end-state: each concern in its own image, supervisord deleted.
+  # Each block below mirrors a [program:…] currently in supervisord.conf.
+  #
+  # See docs/docker-compose-migration.md for the per-service migration order
+  # and the open questions for each (config sharing, log shipping, mTLS).
+  #
+  # nginx:
+  #   image: owasp/modsecurity-crs:nginx
+  #   ...
+  #
+  # wazuh-manager:
+  #   image: wazuh/wazuh-manager:4.7.0
+  #   ...
+  #
+  # wazuh-indexer:
+  #   image: wazuh/wazuh-indexer:4.7.0
+  #   ...
+  #
+  # wazuh-dashboard:
+  #   image: wazuh/wazuh-dashboard:4.7.0
+  #   ...
+  #
+  # crowdsec:
+  #   image: crowdsecurity/crowdsec:latest
+  #   ...
+  #
+  # fail2ban:
+  #   image: crazymax/fail2ban:latest
+  #   ...
+  #
+  # dashboard:
+  #   build: ./dashboard
+  #   ports: ["7100:7100"]
+  #   ...

@@ -1,3 +1,12 @@
+> **⚠ Deprecated — describes the legacy LXC + hactl + Consul deployment.**
+> The HA control plane has been replaced by `nw-agent/` (Quarkus + bundled etcd).
+> The deployment is migrating from "one LXC container with supervisord" to
+> docker-compose with one service per container. See
+> [docs/docker-compose-migration.md](../docker-compose-migration.md) for the
+> migration plan. This doc is kept as historical reference.
+
+---
+
 # Security Bundle — Architecture
 
 ## Goal

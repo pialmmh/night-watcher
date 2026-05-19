@@ -28,13 +28,28 @@ public class MysqlConnections {
         return open(host);
     }
 
+    public Connection openRemoteSlave() throws SQLException {
+        String host = cfg.remoteSlaveHost()
+                .orElseThrow(() -> new SQLException("nw.mysql.remote-slave-host not configured"));
+        return open(host);
+    }
+
+    /** Defaults to {@code remoteHost} when {@code clientTargetHost} is unset. */
+    public Connection openClientTarget() throws SQLException {
+        String host = cfg.clientTargetHost()
+                .or(cfg::remoteHost)
+                .orElseThrow(() -> new SQLException(
+                        "neither nw.mysql.client-target-host nor nw.mysql.remote-host configured"));
+        return open(host);
+    }
+
     public Connection open(String host) throws SQLException {
         String url = "jdbc:mariadb://" + host + ":" + cfg.port() + "/?connectTimeout="
                 + (cfg.connectTimeoutSec() * 1000)
                 + "&socketTimeout=" + (cfg.queryTimeoutSec() * 1000);
         Properties p = new Properties();
         p.setProperty("user", cfg.username());
-        p.setProperty("password", cfg.password());
+        p.setProperty("password", cfg.password().orElse(""));
         return DriverManager.getConnection(url, p);
     }
 }

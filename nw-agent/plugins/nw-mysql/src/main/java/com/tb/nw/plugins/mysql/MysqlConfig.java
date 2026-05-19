@@ -22,16 +22,50 @@ public interface MysqlConfig {
     @WithDefault("root")
     String username();
 
-    /** Password from env var <em>NW_MYSQL_PASSWORD</em> in real deployments. */
-    @WithDefault("")
-    String password();
+    /**
+     * Password from env var <em>NW_MYSQL_PASSWORD</em>. Optional — when absent
+     * the probe attempts a passwordless connection (which mysqld will reject
+     * unless explicitly configured for it). The wrapping value is Optional
+     * so the agent boots cleanly on nodes that don't run any MySQL probe.
+     */
+    Optional<String> password();
 
-    /** Optional remote host to probe for remote-peer / client-vantage checks. */
+    /**
+     * Remote MySQL master host the REMOTE_PEER probe should target.
+     * Activation engine will replace this with a topology-derived address;
+     * for now it's configured statically.
+     */
     Optional<String> remoteHost();
+
+    /**
+     * Remote MySQL slave host the REMOTE_PEER slave probe should target.
+     * Multi-slave coverage lands when target_selector is implemented;
+     * single-target is enough for the first cut.
+     */
+    Optional<String> remoteSlaveHost();
+
+    /**
+     * The host a JDBC client would connect to (typically the master VIP).
+     * Used by the CLIENT-vantage probe. Defaults to {@code remoteHost} when
+     * unset, since most deployments share the address.
+     */
+    Optional<String> clientTargetHost();
 
     /** Heartbeat table queried by canary probes. */
     @WithDefault("nw_heartbeat")
     String heartbeatTable();
+
+    /**
+     * Query the client-vantage probe runs each tick. Default is
+     * {@code SHOW DATABASES} — cheap, requires no special privileges, returns
+     * rows on any healthy mysqld. Operators with a richer canary in mind
+     * (e.g. {@code SELECT 1 FROM nw_heartbeat WHERE k='ping'}) override here.
+     *
+     * The probe classifies as {@code DEAD} if the query throws and as
+     * {@code DEGRADED} if the query returns zero rows.
+     */
+    @WithDefault("SHOW DATABASES")
+    String customQuery();
 
     @WithDefault("50")
     long fastThresholdMs();

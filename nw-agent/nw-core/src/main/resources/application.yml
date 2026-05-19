@@ -13,4 +13,7 @@ quarkus:
 nw:
   agent:
     node-name: ${NW_NODE_NAME:unknown}
-    fabric-endpoint: ${NW_FABRIC_ENDPOINT:http://127.0.0.1:2379}
+    # Multi-peer: comma-separated, e.g.
+    #   NW_AGENT_FABRIC_ENDPOINTS=http://10.0.0.1:2379,http://10.0.0.2:2379,http://10.0.0.3:2379
+    # The smoke / dev default is a single local peer.
+    fabric-endpoints: ${NW_FABRIC_ENDPOINTS:http://127.0.0.1:2379}
