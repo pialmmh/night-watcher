@@ -1,0 +1,69 @@
+# ============================================================================
+#  nw-agent  ·  tenant: mock  ·  profile: dev
+# ============================================================================
+#
+# The full-pipeline test harness: a file-driven mock "service" cluster on one
+# box, coordinated through the real BTCL etcd. No databases involved.
+#
+# Run TWO agents on this box (the mock master's agent + the standby's agent):
+#
+#   Terminal A (mock-a — starts as master, also plays the app tier):
+#     NW_TENANT_NAME=mock NW_NODE_NAME=mock-a \
+#       java -jar nw-dist/target/quarkus-app/quarkus-run.jar
+#
+#   Terminal B (mock-b — the standby, watches mock-a from client + peer seats):
+#     NW_TENANT_NAME=mock NW_NODE_NAME=mock-b NW_HTTP_PORT=7112 \
+#       java -jar nw-dist/target/quarkus-app/quarkus-run.jar
+#
+# Seed the mock cluster:
+#     mkdir -p /tmp/nw-mock
+#     echo master > /tmp/nw-mock/mock-a.role;  echo fast > /tmp/nw-mock/mock-a.state
+#     echo slave  > /tmp/nw-mock/mock-b.role;  echo fast > /tmp/nw-mock/mock-b.state
+#
+# Kill the master:           echo dead > /tmp/nw-mock/mock-a.state
+# Lie to one seat only:      echo dead > /tmp/nw-mock/mock-a.state@client
+#   (single seat down = SDOWN — with require-odown the failover is HELD;
+#    majority of seats down = ODOWN — the failover runs: fence + promote)
+# Watch the vote:            curl -s localhost:7102/agent/info | jq .verdicts
+# ============================================================================
+
+nw:
+  agent:
+    node-name: ${NW_NODE_NAME:mock-a}
+    # Roles are durable on the board — bump the cluster name for a pristine rerun.
+    cluster-name: ${NW_CLUSTER_NAME:mock-dev}
+    cluster-type: Generic
+    fabric-endpoints:
+      - http://10.10.199.41:2379
+      - http://10.10.198.41:2379
+      - http://10.10.197.41:2379
+    advertise-host: 127.0.0.1
+    heartbeat-interval-sec: 5
+    heartbeat-ttl-sec: 15
+
+  mock:
+    state-dir: ${NW_MOCK_STATE_DIR:/tmp/nw-mock}
+    # Every agent watches the mock cluster's master. The peer probe
+    # self-skips on the master itself ("a master is known AND it is not me").
+    watch-target: ${NW_MOCK_WATCH_TARGET:mock-a}
+
+  failover:
+    failure-threshold: 3
+    trigger-investigators:
+      - mock.client
+    # The point of the harness: strikes alone don't fire the coordinator —
+    # a majority of reporting seats must agree (Resolver verdict ODOWN).
+    require-odown: true
+    resolver-freshness-sec: 30
+    plan-plugin: nw-mock
+    fence-timeout-sec: 10
+    promote-timeout-sec: 10
+
+quarkus:
+  http:
+    host: ${NW_BIND_HOST:127.0.0.1}
+    port: ${NW_HTTP_PORT:7102}
+  log:
+    category:
+      "com.tb.nw":
+        level: DEBUG

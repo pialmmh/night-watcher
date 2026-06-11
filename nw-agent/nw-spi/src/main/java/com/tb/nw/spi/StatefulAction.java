@@ -13,12 +13,12 @@ import java.util.Optional;
  * step takes minutes (e.g. {@code mysql.basebackup-from}) and retry-from-zero
  * would be expensive.</p>
  *
- * @param <P> plugin-specific action payload
+ * @param <P> plugin-specific command event
  */
-public interface StatefulAction<P extends PluginEntity> extends FailoverAction<P> {
+public interface StatefulAction<P extends CommandEvent> extends FailoverAction<P> {
 
     /** Called when the action's state was previously persisted via {@link #snapshotState()}. */
-    Optional<ActionResult> resumeFromState(ActionContext<P> ctx, String persistedState);
+    Optional<CommandResultEvent> resumeFromState(ActionContext<P> ctx, String persistedState);
 
     /** Serialize current progress so a future resume can pick up where we left off. */
     String snapshotState();

@@ -25,6 +25,8 @@ import EventNoteIcon from '@mui/icons-material/EventNote';
 import DesktopWindowsIcon from '@mui/icons-material/DesktopWindows';
 import TuneIcon from '@mui/icons-material/Tune';
 import AppsIcon from '@mui/icons-material/Apps';
+import GroupWorkIcon from '@mui/icons-material/GroupWork';
+import DomainIcon from '@mui/icons-material/Domain';
 import { useAuth } from '../auth/AuthContext';
 
 const DRAWER_WIDTH = 220;
@@ -38,6 +40,7 @@ const NAV_ITEMS = [
   { label: 'Watchdog', path: '/watchdog', icon: <MonitorHeartIcon /> },
   { label: 'Network', path: '/network', icon: <PublicIcon /> },
   { label: 'HA Cluster', path: '/ha', icon: <DeviceHubIcon /> },
+  { label: 'HA Manager', path: '/ha/manage', icon: <DeviceHubIcon /> },
 ];
 
 const GATEWAY_ITEMS = [
@@ -54,6 +57,8 @@ const IDENTITY_ITEMS = [
   { label: 'Sessions', path: '/sessions', icon: <DesktopWindowsIcon /> },
   { label: 'Events', path: '/events', icon: <EventNoteIcon /> },
   { label: 'Realm Settings', path: '/realm', icon: <TuneIcon /> },
+  { label: 'Groups', path: '/groups', icon: <GroupWorkIcon /> },
+  { label: 'Tenants', path: '/tenants', icon: <DomainIcon /> },
 ];
 
 export default function Layout({ children }) {

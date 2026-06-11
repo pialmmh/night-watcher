@@ -29,6 +29,7 @@ public class AgentInfo {
     @Inject ObservationCache cache;
     @Inject com.tb.nw.core.lifecycle.AgentLifecycleMachine lifecycle;
     @Inject com.tb.nw.core.coord.FailoverCoordinator coordinator;
+    @Inject com.tb.nw.core.coord.Resolver resolver;
     @Inject com.tb.nw.fabric.api.Fabric fabric;
 
     @GET
@@ -52,6 +53,7 @@ public class AgentInfo {
         out.put("observations_in_cache", cache.size());
         out.put("lifecycle_phase", lifecycle.currentPhase());
         out.put("failover_phase", coordinator.currentPhase());
+        out.put("verdicts", verdicts());
         var lastTrigger = coordinator.lastTrigger();
         if (lastTrigger != null) {
             out.put("last_failover_trigger", Map.of(
@@ -64,6 +66,19 @@ public class AgentInfo {
 
     private boolean fabricReachable() {
         return fabric instanceof EtcdFabric e && e.ping();
+    }
+
+    /** Per-target Resolver verdicts — seat scores included so a curl shows the vote. */
+    private Map<String, Object> verdicts() {
+        Map<String, Object> out = new LinkedHashMap<>();
+        resolver.all().forEach((target, tv) -> out.put(target, Map.of(
+                "verdict", tv.verdict().name(),
+                "seats_reporting", tv.seatsReporting(),
+                "seats_down", tv.seatsDown(),
+                "seat_scores", tv.seatScores().entrySet().stream()
+                        .collect(java.util.stream.Collectors.toMap(
+                                e -> e.getKey().name(), Map.Entry::getValue)))));
+        return out;
     }
 
     private static String asString(Instant t) {

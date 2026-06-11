@@ -1,0 +1,49 @@
+plugin:
+  id: nw-mock
+  version: 1.0.0
+  service_type: mock
+  cluster_types:
+    - Generic
+  description: "File-driven mock service — full-pipeline test harness (watch + vote + orchestrate)"
+  author: telcobright
+  spi_compatible: ">=1.0,<2.0"
+
+contracts:
+  facets_declared:
+    - mock-service-here
+    - mock-master-here
+    - mock-slave-here
+    - mock-client-here
+
+  roles_declared:
+    - master
+    - slave
+    - quarantined
+
+  actions_declared:
+    - id: mock.fence-self
+      command: mock.fence       # writes {node}.state = fenced
+    - id: mock.promote-self
+      command: mock.promote     # writes {node}.role = master, {node}.state = fast
+
+  investigators_declared:
+    - id: mock.local
+      vantage: local-self
+      requires_facets: [mock-service-here]
+      reads: "{node}.state + {node}.role"
+    - id: mock.client
+      vantage: client
+      requires_facets: [mock-client-here]
+      target_from: nw.mock.watch-target
+      reads: "{target}.state@client, falling back to {target}.state"
+    - id: mock.peer
+      vantage: remote-peer
+      requires_facets: [mock-service-here]
+      target_from: nw.mock.watch-target    # skipped when target == me
+      reads: "{target}.state@peer, falling back to {target}.state"
+
+permission_matrix_defaults: {}
+resolver_policy_defaults:
+  # Scores per freshest-observation-per-publisher, averaged per seat:
+  #   FAST = 1.0 · DEGRADED = 0.5 · DEAD/fenced/absent = 0.0 · UNKNOWN = no signal
+  down_ceiling: 0.25

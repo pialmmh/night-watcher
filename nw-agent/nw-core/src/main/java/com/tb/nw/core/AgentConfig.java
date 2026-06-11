@@ -4,6 +4,7 @@ import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Agent-level config. Backed by Quarkus / SmallRye Config; values come from
@@ -45,4 +46,11 @@ public interface AgentConfig {
     /** Heartbeat lease TTL (seconds). Typically 3× interval. */
     @WithDefault("15")
     int heartbeatTtlSec();
+
+    /**
+     * Host peers should use to reach this agent's command door. Defaults to
+     * the HTTP bind host when unset — override (env
+     * {@code NW_AGENT_ADVERTISE_HOST}) when binding and advertising differ.
+     */
+    Optional<String> advertiseHost();
 }

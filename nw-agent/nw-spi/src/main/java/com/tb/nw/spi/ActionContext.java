@@ -6,26 +6,26 @@ import java.time.Duration;
 
 /**
  * Handed to every {@link FailoverAction#execute} invocation. Carries
- * identity, epoch, idempotency token, and the typed payload supplied by the
- * Dispatcher.
+ * identity, the typed command event the Dispatcher sent, and per-call
+ * scaffolding.
  *
- * <p>The payload is plugin-typed: the framework validates its
- * {@code pluginVersion} against the locally loaded plugin's
- * {@link PluginDescriptor} before dispatching, so an action implementation
- * never sees a version-mismatched payload.</p>
+ * <p>The framework validates the command's {@link CommandEvent#pluginVersion}
+ * against the locally loaded plugin's {@link PluginDescriptor} before
+ * dispatching, so an action implementation never sees a version-mismatched
+ * command.</p>
  *
- * <p>SshExecutor / JdbcSource / Logger / Tracer are deferred until those
- * layers land; plugins open their own JDBC connections from service-specific
- * helpers in the meantime.</p>
- *
- * @param <P> plugin-specific action payload
+ * @param <P> plugin-specific {@link CommandEvent} subtype
  */
-public record ActionContext<P extends PluginEntity>(
+public record ActionContext<P extends CommandEvent>(
         String clusterName,
         String localNode,
-        long failoverEpoch,
-        String idempotencyToken,
         Duration deadline,
-        P payload,
+        P command,
         Fabric fabric
-) {}
+) {
+    /** Convenience — the failover epoch the command was minted in. */
+    public long failoverEpoch() { return command.failoverEpoch(); }
+
+    /** Convenience — the command's correlation id (also its idempotency key). */
+    public String commandEventId() { return command.eventId(); }
+}

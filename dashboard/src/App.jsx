@@ -23,6 +23,9 @@ import SessionManagement from './pages/SessionManagement';
 import LoginEvents from './pages/LoginEvents';
 import RealmSettings from './pages/RealmSettings';
 import ClientManagement from './pages/ClientManagement';
+import HaClusterManager from './pages/HaClusterManager';
+import GroupManagement from './pages/GroupManagement';
+import TenantProvisioning from './pages/TenantProvisioning';
 
 const theme = createTheme({
   palette: {
@@ -62,6 +65,9 @@ export default function App() {
                     <Route path="/watchdog" element={<Watchdog />} />
                     <Route path="/network" element={<Network />} />
                     <Route path="/ha" element={<HaCluster />} />
+                    <Route path="/ha/manage" element={
+                      <ProtectedRoute requireAdmin><HaClusterManager /></ProtectedRoute>
+                    } />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/gateway" element={<GatewayOverview />} />
                     <Route path="/gateway/policies" element={<GatewayPolicies />} />
@@ -86,6 +92,12 @@ export default function App() {
                       <ProtectedRoute requireAdmin>
                         <UserManagement />
                       </ProtectedRoute>
+                    } />
+                    <Route path="/groups" element={
+                      <ProtectedRoute requireAdmin><GroupManagement /></ProtectedRoute>
+                    } />
+                    <Route path="/tenants" element={
+                      <ProtectedRoute requireAdmin><TenantProvisioning /></ProtectedRoute>
                     } />
                   </Routes>
                 </Layout>

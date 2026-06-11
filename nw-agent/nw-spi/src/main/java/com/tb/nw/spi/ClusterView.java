@@ -8,11 +8,12 @@ import java.util.Map;
  * topology + the recent observation set so the generator can pick the right
  * step order.
  *
- * @param <T> plugin-specific observation detail
+ * @param <T> plugin-specific {@link HealthCheckEvent} subtype
  */
-public record ClusterView<T extends PluginEntity>(
+public record ClusterView<T extends HealthCheckEvent>(
         String cluster,
         ClusterType clusterType,
+        long failoverEpoch,
         Map<String, List<String>> rolesByNode,
         List<Observation<T>> recentObservations
 ) {

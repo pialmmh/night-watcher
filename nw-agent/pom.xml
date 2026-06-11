@@ -33,6 +33,7 @@
         <module>nw-fabric-etcd</module>
         <module>nw-core</module>
         <module>plugins/nw-mysql</module>
+        <module>plugins/nw-mock</module>
         <module>nw-dist</module>
     </modules>
 
@@ -70,6 +71,11 @@
             <dependency>
                 <groupId>com.telcobright.nw</groupId>
                 <artifactId>nw-mysql</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.telcobright.nw</groupId>
+                <artifactId>nw-mock</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

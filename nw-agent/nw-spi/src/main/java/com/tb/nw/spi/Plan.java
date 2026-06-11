@@ -5,19 +5,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A failover plan produced by a {@link FailoverPlanGenerator}. Steps are
- * intentionally narrow at the SPI level — the Dispatcher knows how to walk
- * them; plugin authors construct {@link PlanStep} instances via the static
- * factories the dispatcher exposes.
+ * A failover plan produced by a {@link FailoverPlanGenerator}. The
+ * Dispatcher walks the ordered steps and ships each one to its target.
  *
- * <p>The {@code P} type parameter is the plugin's typed action payload —
- * the same type {@link FailoverAction} declares. ETCD_TXN steps carry
- * {@code null} payload; ACTION_CALL steps carry a typed {@code P} that the
- * receiving action consumes.</p>
+ * <p>Each {@link PlanStep} carries a typed {@link CommandEvent} when its
+ * {@code kind} is {@code ACTION_CALL} — that's the event the receiving
+ * agent dispatches to the matching {@link FailoverAction}.
+ * {@code ETCD_TXN} steps carry no command; the Dispatcher executes the
+ * embedded transaction directly.</p>
  *
- * @param <P> plugin-specific action payload
+ * @param <P> plugin-specific command event used by this plan's ACTION_CALL steps
  */
-public record Plan<P extends PluginEntity>(
+public record Plan<P extends CommandEvent>(
         String id,
         String cluster,
         long failoverEpoch,
@@ -25,13 +24,11 @@ public record Plan<P extends PluginEntity>(
         List<PlanStep<P>> steps,
         Map<String, Object> reasonChain
 ) {
-    public record PlanStep<P extends PluginEntity>(
+    public record PlanStep<P extends CommandEvent>(
             int index,
-            String kind,            // "ETCD_TXN" | "ACTION_CALL"
+            String kind,           // "ETCD_TXN" | "ACTION_CALL"
             String description,
-            NodeId targetNode,      // null for ETCD_TXN
-            String actionId,        // null for ETCD_TXN
-            P payload,              // null for ETCD_TXN; typed for ACTION_CALL
+            P command,             // null for ETCD_TXN; typed event for ACTION_CALL
             long timeoutMillis,
             int maxRetries
     ) {}

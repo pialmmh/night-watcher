@@ -6,21 +6,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tb.nw.fabric.api.Fabric;
 import com.tb.nw.fabric.api.FabricException;
 import com.tb.nw.fabric.api.FabricKV;
+import com.tb.nw.spi.HealthCheckEvent;
 import com.tb.nw.spi.Observation;
 import com.tb.nw.spi.ObservationView;
 import com.tb.nw.spi.PluginDescriptor;
-import com.tb.nw.spi.PluginEntity;
 import io.quarkus.runtime.Startup;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,13 +67,10 @@ public class ObservationCache {
     @Inject AgentConfig cfg;
     @Inject Fabric fabric;
     @Inject ObjectMapper json;
-    @Inject Instance<PluginDescriptor> descriptors;
+    @Inject com.tb.nw.core.act.PluginRegistry plugins;
 
     private final ConcurrentHashMap<ObsKey, Observation<?>> current = new ConcurrentHashMap<>();
     private final CopyOnWriteArrayList<Consumer<ChangeEvent>> listeners = new CopyOnWriteArrayList<>();
-
-    /** pluginId → descriptor (lazily resolved once at startup). */
-    private final Map<String, PluginDescriptor> descriptorsById = new HashMap<>();
 
     private FabricKV.Watch watchHandle;
 
@@ -87,12 +82,6 @@ public class ObservationCache {
 
     @PostConstruct
     void start() {
-        for (PluginDescriptor d : descriptors) {
-            descriptorsById.put(d.pluginId(), d);
-        }
-        LOG.infof("ObservationCache: %d plugin descriptors registered: %s",
-                descriptorsById.size(), descriptorsById.keySet());
-
         String prefix = observationsPrefix();
         try {
             seedFromRangeRead(prefix);
@@ -146,10 +135,10 @@ public class ObservationCache {
      * an empty list rather than a {@code ClassCastException}.
      */
     @SuppressWarnings("unchecked")
-    public <T extends PluginEntity> ObservationView<T> viewOf(String target, Class<T> detailType) {
+    public <T extends HealthCheckEvent> ObservationView<T> viewOf(String target, Class<T> eventType) {
         List<Observation<T>> filtered = new ArrayList<>();
         for (Observation<?> obs : byTarget(target)) {
-            if (detailType.isInstance(obs.detail())) {
+            if (eventType.isInstance(obs.event())) {
                 filtered.add((Observation<T>) obs);
             }
         }
@@ -237,7 +226,7 @@ public class ObservationCache {
             return null;
         }
 
-        PluginDescriptor descriptor = descriptorsById.get(pluginId);
+        PluginDescriptor descriptor = plugins.byId(pluginId);
         if (descriptor == null) {
             LOG.warnf("observation rejected: unknown-plugin pluginId=%s pluginVersion=%s", pluginId, pluginVersion);
             return null;
@@ -250,7 +239,7 @@ public class ObservationCache {
 
         try {
             JavaType type = json.getTypeFactory()
-                    .constructParametricType(Observation.class, descriptor.observationDetailType());
+                    .constructParametricType(Observation.class, descriptor.healthEventType());
             return json.convertValue(node, type);
         } catch (Exception e) {
             LOG.warnf("observation typed-deserialize failed for plugin %s@%s: %s",

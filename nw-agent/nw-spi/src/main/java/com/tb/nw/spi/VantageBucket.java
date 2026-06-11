@@ -8,9 +8,9 @@ import java.util.List;
  * bucket in isolation, producing a per-vantage health number that the
  * weighted reducer combines.
  *
- * @param <T> plugin-specific observation detail
+ * @param <T> plugin-specific {@link HealthCheckEvent} subtype
  */
-public record VantageBucket<T extends PluginEntity>(
+public record VantageBucket<T extends HealthCheckEvent>(
         String target,
         Vantage vantage,
         List<Observation<T>> observations

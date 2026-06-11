@@ -1,0 +1,63 @@
+# ============================================================================
+#  nw-agent  ·  tenant: btcl  ·  profile: dev
+# ============================================================================
+#
+# Mirrors what a dev-box agent runs against the BTCL etcd cluster (the 3-node
+# cluster on kafka1/2/3 over WireGuard) probing dell-sms-master's percona-5.7.
+#
+# Effective endpoints (verified working over WG):
+#   etcd peers   : kafka1=10.10.199.41:2379  kafka2=10.10.198.41:2379  kafka3=10.10.197.41:2379
+#   MySQL target : 10.10.196.1:3306  (dell-sms-master's docker-proxy on lxdbr0)
+#
+# Override host-identity / secrets at deploy time:
+#   NW_NODE_NAME     — required, unique per host
+#   NW_MYSQL_PASSWORD — never put in YAML
+# ============================================================================
+
+nw:
+  agent:
+    # node-name is per-host; supply via NW_NODE_NAME at runtime.
+    node-name: ${NW_NODE_NAME:dev-mustafa}
+    cluster-name: btcl-dev
+    cluster-type: MySqlMasterSlave
+    fabric-endpoints:
+      - http://10.10.199.41:2379
+      - http://10.10.198.41:2379
+      - http://10.10.197.41:2379
+    # mysql-client-here arms the MySqlRemoteClient probe.
+    # Comma-separated; reads through StaticFacetDetector.
+    # Override per-host via NW_AGENT_STATIC_FACETS when needed.
+    static-facets: mysql-client-here
+    heartbeat-interval-sec: 5
+    heartbeat-ttl-sec: 15
+
+  mysql:
+    local-host: 127.0.0.1                # not used in client-vantage; kept for completeness
+    port: 3306
+    username: root
+    # password from env NW_MYSQL_PASSWORD — never written here
+    client-target-host: 10.10.196.1      # dell-sms-master percona docker, reachable over WG
+    custom-query: SHOW DATABASES
+    fast-threshold-ms: 50
+    degraded-threshold-ms: 500
+    dead-threshold-ms: 5000
+    connect-timeout-sec: 2
+    query-timeout-sec: 3
+    heartbeat-table: nw_heartbeat
+
+  failover:
+    failure-threshold: 3
+    trigger-investigators:
+      - mysql.remote.client
+    fence-timeout-sec: 10
+    promote-timeout-sec: 10
+
+# Dev convenience — verbose logging on our own packages.
+quarkus:
+  http:
+    host: ${NW_BIND_HOST:127.0.0.1}
+    port: 7102
+  log:
+    category:
+      "com.tb.nw":
+        level: DEBUG

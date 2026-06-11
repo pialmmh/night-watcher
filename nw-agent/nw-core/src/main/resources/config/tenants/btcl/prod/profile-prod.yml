@@ -1,0 +1,60 @@
+# ============================================================================
+#  nw-agent  ·  tenant: btcl  ·  profile: prod
+# ============================================================================
+#
+# Production-targeted config for the BTCL deployment. Today this is a
+# placeholder using the same overlay topology as dev — when the v2 deploy
+# lands on actual BTCL production hosts (dell-sms-master, dell-sms-slave,
+# sbc1 / sbc4), the endpoint list + target host gets refined.
+#
+# Host-identity / secrets always come from env at deploy time:
+#   NW_NODE_NAME       — required, unique per host
+#   NW_MYSQL_PASSWORD  — never in YAML
+# ============================================================================
+
+nw:
+  agent:
+    node-name: ${NW_NODE_NAME}             # required — no default in prod
+    cluster-name: btcl-prod
+    cluster-type: MySqlMasterSlave
+    # When deployed to the production hosts directly, use each host's own
+    # bundled etcd peer (loopback) + the two sibling overlay IPs as fallbacks.
+    fabric-endpoints:
+      - http://127.0.0.1:2379
+      - http://10.10.199.41:2379
+      - http://10.10.198.41:2379
+      - http://10.10.197.41:2379
+    static-facets: ${NW_AGENT_STATIC_FACETS:}
+    heartbeat-interval-sec: 5
+    heartbeat-ttl-sec: 15
+
+  mysql:
+    local-host: 127.0.0.1
+    port: 3306
+    username: nw_monitor
+    # password from env NW_MYSQL_PASSWORD
+    client-target-host: ${NW_MYSQL_CLIENT_TARGET_HOST:10.10.196.1}
+    custom-query: SHOW DATABASES
+    # Slightly looser thresholds for production WG latency
+    fast-threshold-ms: 100
+    degraded-threshold-ms: 1000
+    dead-threshold-ms: 5000
+    connect-timeout-sec: 3
+    query-timeout-sec: 5
+
+  failover:
+    failure-threshold: 3
+    trigger-investigators:
+      - mysql.remote.client
+    fence-timeout-sec: 10
+    promote-timeout-sec: 15
+
+quarkus:
+  http:
+    host: ${NW_BIND_HOST:127.0.0.1}
+    port: 7102
+  log:
+    level: INFO
+    category:
+      "com.tb.nw":
+        level: INFO

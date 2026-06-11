@@ -8,9 +8,9 @@ package com.tb.nw.spi;
  * the same output so the shadow Resolver on followers reaches the same
  * verdict as the coordinator.</p>
  *
- * @param <T> plugin-specific observation detail
+ * @param <T> plugin-specific {@link HealthCheckEvent} subtype
  */
-public interface HealthAggregator<T extends PluginEntity> {
+public interface HealthAggregator<T extends HealthCheckEvent> {
 
     /** Owning plugin's descriptor. */
     PluginDescriptor descriptor();

@@ -39,6 +39,7 @@ public class FailureTracker {
     @Inject ObservationCache cache;
     @Inject FailoverConfig cfg;
     @Inject FailoverCoordinator coordinator;
+    @Inject Resolver resolver;
 
     private final ConcurrentHashMap<ObservationCache.ObsKey, AtomicInteger> counters = new ConcurrentHashMap<>();
     private Set<String> triggerInvestigatorIds;
@@ -68,6 +69,10 @@ public class FailureTracker {
             LOG.infof("DEAD count for %s/%s = %d/%d",
                     key.target(), key.investigator(), n, cfg.failureThreshold());
             if (n >= cfg.failureThreshold()) {
+                if (cfg.requireOdown() && !quorumAgrees(obs.target())) {
+                    // Keep the counter — the next DEAD re-evaluates the vote.
+                    return;
+                }
                 counters.remove(key);
                 coordinator.declareTargetDead(new MasterDeadDetected(
                         obs.target(), obs.investigator(), n));
@@ -80,6 +85,19 @@ public class FailureTracker {
             }
         }
         // UNKNOWN: no signal — neither count nor reset.
+    }
+
+    /**
+     * The cross-vantage gate (require-odown mode): strikes alone don't fire
+     * the coordinator — a majority of reporting seats must agree the target
+     * is down (Resolver verdict ODOWN).
+     */
+    private boolean quorumAgrees(String target) {
+        var verdict = resolver.verdictFor(target).orElse(null);
+        if (verdict == com.tb.nw.spi.Verdict.ODOWN) return true;
+        LOG.infof("strike threshold hit for %s but resolver says %s (require-odown) — holding",
+                target, verdict == null ? "no-evidence" : verdict);
+        return false;
     }
 
     /** Inspect current streak length — used by /agent/info. */

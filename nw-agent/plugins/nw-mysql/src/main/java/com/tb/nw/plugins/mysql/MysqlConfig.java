@@ -81,4 +81,15 @@ public interface MysqlConfig {
 
     @WithDefault("3")
     int queryTimeoutSec();
+
+    /**
+     * Replication user the start-replica action wires into CHANGE
+     * REPLICATION SOURCE / CHANGE MASTER. From env
+     * {@code NW_MYSQL_REPLICATION_USER} — commands carry only a credentials
+     * REFERENCE; the secret resolves here, on the target agent.
+     */
+    Optional<String> replicationUser();
+
+    /** Replication password — env {@code NW_MYSQL_REPLICATION_PASSWORD}. Never in YAML. */
+    Optional<String> replicationPassword();
 }

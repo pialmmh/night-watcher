@@ -1,0 +1,106 @@
+# ============================================================================
+#  nw-agent  ·  tenant: example  ·  profile: dev
+# ============================================================================
+#
+#  THIS FILE IS THE TEMPLATE. Copy it for every new tenant / profile.
+#
+#  Every key under `nw.*` is documented here with what it controls; the
+#  surrounding tenants (btcl, bdcom, link3) just fill them in with concrete
+#  values.
+# ============================================================================
+
+nw:
+  # ──────────────────────────────────────────────────────────────────────
+  # nw.agent.*  —  the agent's identity and how it joins the fabric.
+  # Bound to AgentConfig (@ConfigMapping prefix=nw.agent).
+  # ──────────────────────────────────────────────────────────────────────
+  agent:
+    # Unique per-host. The etcd member name + the SPIFFE workload id share
+    # this when those layers land. Always override per-host via env.
+    node-name: ${NW_NODE_NAME}
+
+    # Logical cluster the agent participates in. Keys it writes go under
+    # /clusters/{cluster-name}/... in etcd. Distinct per-tenant per-profile.
+    cluster-name: example-dev
+
+    # Typed cluster shape. Drives plugin selection (which Aggregator /
+    # CandidateSelector / PlanGenerator handles this cluster). See ClusterType.
+    cluster-type: MySqlMasterSlave
+
+    # etcd peers the agent's jetcd client knows about. Round-robins / fails
+    # over across these. Usually contains 127.0.0.1 first (the co-located
+    # bundled etcd) plus the cross-host peers as fallbacks.
+    fabric-endpoints:
+      - http://127.0.0.1:2379
+
+    # Comma-separated facets the StaticFacetDetector publishes for this
+    # host. mysql-client-here arms the MySqlRemoteClient probe.
+    static-facets: ${NW_AGENT_STATIC_FACETS:}
+
+    # How often (s) the agent writes a heartbeat key.
+    heartbeat-interval-sec: 5
+
+    # TTL (s) of the agent's shared lease. Lease lapses → all of the agent's
+    # observations + heartbeat + facets disappear from etcd. Rule of thumb:
+    # 3 × heartbeat-interval-sec.
+    heartbeat-ttl-sec: 15
+
+  # ──────────────────────────────────────────────────────────────────────
+  # nw.mysql.*  —  the nw-mysql plugin's config (only consumed when the
+  # mysql-client-here facet is set on this host). Bound to MysqlConfig.
+  # ──────────────────────────────────────────────────────────────────────
+  mysql:
+    local-host: 127.0.0.1
+    port: 3306
+    username: root
+    # password ALWAYS comes from env NW_MYSQL_PASSWORD — never written here.
+
+    # The address the client-vantage probe dials. Overrideable per-host.
+    client-target-host: ${NW_MYSQL_CLIENT_TARGET_HOST}
+
+    # Canary the probe runs every tick. SHOW DATABASES is cheap and needs
+    # no special privileges. Override for tenant-specific health-tables.
+    custom-query: SHOW DATABASES
+
+    # FAST / DEGRADED / DEAD bucket thresholds in milliseconds, applied to
+    # the probe's measured wall-time.
+    fast-threshold-ms: 50
+    degraded-threshold-ms: 500
+    dead-threshold-ms: 5000
+
+    connect-timeout-sec: 2
+    query-timeout-sec: 3
+
+    # Reserved for future per-target heartbeat-row probes.
+    heartbeat-table: nw_heartbeat
+
+  # ──────────────────────────────────────────────────────────────────────
+  # nw.failover.*  —  3-strike SDOWN + which probes trigger the
+  # FailoverCoordinator SM. Bound to FailoverConfig.
+  # ──────────────────────────────────────────────────────────────────────
+  failover:
+    # Consecutive DEAD verdicts before the coordinator's
+    # FENCING_MASTER state fires.
+    failure-threshold: 3
+
+    # Investigator IDs whose DEAD verdict drives failover. Others are
+    # tracked in the cache but never trigger an SM transition.
+    trigger-investigators:
+      - mysql.remote.client
+
+    # Hard caps on the orchestration phases (the SM falls into
+    # FAILED_TIMEOUT if a step doesn't complete in time).
+    fence-timeout-sec: 10
+    promote-timeout-sec: 10
+
+# ──────────────────────────────────────────────────────────────────────
+# Quarkus framework knobs per-profile. Logging is the most-tuned one.
+# ──────────────────────────────────────────────────────────────────────
+quarkus:
+  http:
+    host: ${NW_BIND_HOST:127.0.0.1}
+    port: 7102
+  log:
+    category:
+      "com.tb.nw":
+        level: DEBUG

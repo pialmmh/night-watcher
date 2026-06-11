@@ -4,7 +4,7 @@ import com.tb.nw.spi.ClusterType;
 import com.tb.nw.spi.HealthCheck;
 import com.tb.nw.spi.HealthReport;
 import com.tb.nw.spi.Observation;
-import com.tb.nw.spi.PluginEntity;
+import com.tb.nw.spi.HealthCheckEvent;
 import com.tb.nw.spi.ProbeContext;
 import io.quarkus.runtime.Startup;
 import io.quarkus.scheduler.Scheduled;
@@ -25,7 +25,7 @@ import java.time.Duration;
  * engine (future) will filter by predicates and per-investigator schedule.</p>
  *
  * <p>The CDI injection captures every plugin's typed probe via the wildcard
- * bound {@code HealthCheck<? extends PluginEntity>}. The typed detail flows
+ * bound {@code HealthCheck<? extends HealthCheckEvent>}. The typed detail flows
  * through to the published Observation — Jackson serializes it as the
  * plugin's record shape, and ObservationCache uses the registered
  * PluginDescriptors to deserialize incoming envelopes back into the right
@@ -43,18 +43,18 @@ public class InvestigatorRunner {
     @Inject com.tb.nw.fabric.api.Fabric fabric;
 
     @Inject
-    Instance<HealthCheck<? extends PluginEntity>> checks;
+    Instance<HealthCheck<? extends HealthCheckEvent>> checks;
 
     @Scheduled(every = "5s", delayed = "6s")
     public void tick() {
         var currentFacets = facets.snapshot();
-        for (HealthCheck<? extends PluginEntity> check : checks) {
+        for (HealthCheck<? extends HealthCheckEvent> check : checks) {
             if (notApplicable(check, currentFacets)) continue;
             runOne(check);
         }
     }
 
-    private boolean notApplicable(HealthCheck<? extends PluginEntity> check, java.util.Set<String> currentFacets) {
+    private boolean notApplicable(HealthCheck<? extends HealthCheckEvent> check, java.util.Set<String> currentFacets) {
         var required = check.requiredFacets();
         if (required.isEmpty()) return false;
         return !currentFacets.containsAll(required);
@@ -66,7 +66,7 @@ public class InvestigatorRunner {
      * The cast is safe; suppress the static warning.
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private void runOne(HealthCheck<? extends PluginEntity> check) {
+    private void runOne(HealthCheck<? extends HealthCheckEvent> check) {
         try {
             ProbeContext ctx = buildContext();
             String target = check.target(ctx);

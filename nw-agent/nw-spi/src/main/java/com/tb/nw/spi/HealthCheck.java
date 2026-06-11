@@ -9,14 +9,13 @@ import java.util.Set;
  * <p>Implementations MUST be stateless across {@code probe()} calls — the
  * agent may instantiate once and invoke repeatedly from a scheduler thread.</p>
  *
- * <p>Strict typing: a probe declares the {@link PluginEntity} type of the
- * detail it produces. The framework uses this type when serializing
- * observations to etcd and (with the matching {@link PluginDescriptor}) when
- * deserializing them back at consumption sites.</p>
+ * <p>A probe emits a typed {@link HealthCheckEvent} — the plugin's domain
+ * event for "I observed something". The framework wraps it in an
+ * {@link Observation} envelope for transport across the etcd fabric.</p>
  *
- * @param <T> plugin-specific observation detail
+ * @param <T> the {@link HealthCheckEvent} subtype this probe emits
  */
-public interface HealthCheck<T extends PluginEntity> {
+public interface HealthCheck<T extends HealthCheckEvent> {
 
     /** Globally unique probe identifier, e.g. {@code "mysql.remote.client"}. */
     String id();
@@ -28,11 +27,10 @@ public interface HealthCheck<T extends PluginEntity> {
     PluginDescriptor descriptor();
 
     /**
-     * The {@link PluginEntity} subclass this probe returns as observation
-     * detail. Used by the framework for Jackson deserialization of inbound
-     * observations from etcd.
+     * The {@link HealthCheckEvent} subclass this probe returns. Used by the
+     * framework for Jackson deserialization of inbound observations from etcd.
      */
-    Class<T> detailType();
+    Class<T> eventType();
 
     /**
      * Facets this probe requires to be applicable on the host. If any are
@@ -46,8 +44,7 @@ public interface HealthCheck<T extends PluginEntity> {
     /**
      * The node id being probed. Default is the local node — correct for
      * {@code LOCAL_SELF} vantage. Remote / client probes override to return
-     * the remote target's id so the published Observation's {@code target}
-     * field correctly identifies the subject.
+     * the remote target's id.
      *
      * <p>Returning {@code null} short-circuits the tick (no observation
      * published) — useful when the probe is technically applicable but the
@@ -57,6 +54,6 @@ public interface HealthCheck<T extends PluginEntity> {
         return ctx.localNode();
     }
 
-    /** Do the work. Must respect {@code ctx.deadline()}; should not throw — return UNKNOWN with a populated detail on internal errors. */
+    /** Do the work. Must respect {@code ctx.deadline()}; should not throw — return a typed UNKNOWN event on internal errors. */
     HealthReport<T> probe(ProbeContext ctx);
 }

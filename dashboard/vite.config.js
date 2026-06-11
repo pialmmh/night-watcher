@@ -1,11 +1,23 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import devMockApi from './dev-mock-api.js';
+
+const useMock = process.env.VITE_MOCK !== 'false';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), ...(useMock ? [devMockApi()] : [])],
   server: {
     port: 7100,
     proxy: {
+      // Always proxy HA cluster API to Python backend
+      '/api/clusters': { target: 'http://127.0.0.1:7105', changeOrigin: true },
+      '/api/nodes': { target: 'http://127.0.0.1:7105', changeOrigin: true },
+      '/api/groups': { target: 'http://127.0.0.1:7105', changeOrigin: true },
+      '/api/resources': { target: 'http://127.0.0.1:7105', changeOrigin: true },
+      '/api/checks': { target: 'http://127.0.0.1:7105', changeOrigin: true },
+      // Keycloak proxy — strip /auth prefix (Keycloak runs at root in dev, nginx adds /auth in prod)
+      '/auth': { target: 'http://127.0.0.1:7104', changeOrigin: true, rewrite: (path) => path.replace(/^\/auth/, '') },
+      ...(useMock ? {} : {
       '/api/es': {
         target: 'https://10.10.195.1:9200',
         changeOrigin: true,
@@ -39,6 +51,7 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/hactl/, ''),
       },
+    }),
     },
   },
   build: {

@@ -8,3 +8,11 @@ tenants/*/ACCESS_INFO.md
 
 # OS
 .DS_Store
+
+# IDE / tooling artifacts
+.idea/
+.playwright-mcp/
+dashboard/test-results/
+
+# Maven
+nw-agent/**/target/

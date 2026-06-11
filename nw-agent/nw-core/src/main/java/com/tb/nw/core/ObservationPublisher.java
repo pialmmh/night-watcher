@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tb.nw.fabric.api.Fabric;
 import com.tb.nw.fabric.api.FabricException;
 import com.tb.nw.spi.Observation;
-import com.tb.nw.spi.PluginEntity;
+import com.tb.nw.spi.HealthCheckEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
@@ -35,7 +35,7 @@ public class ObservationPublisher {
 
     private final Map<String, Observation<?>> lastByInvestigator = new ConcurrentHashMap<>();
 
-    public <T extends PluginEntity> void publish(Observation<T> o) {
+    public <T extends HealthCheckEvent> void publish(Observation<T> o) {
         try {
             String key = pathFor(o);
             byte[] body = json.writeValueAsBytes(o);

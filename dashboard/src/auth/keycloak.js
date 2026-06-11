@@ -402,3 +402,94 @@ export async function updateRealmSettings(accessToken, settings) {
   });
   if (!resp.ok) throw new Error('Failed to update realm settings');
 }
+
+// --- Group Management ---
+
+export async function listGroups(accessToken) {
+  const resp = await fetch(`${ADMIN_URL}/groups?max=200`, {
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to list groups');
+  return resp.json();
+}
+
+export async function getGroup(accessToken, groupId) {
+  const resp = await fetch(`${ADMIN_URL}/groups/${groupId}`, {
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to get group');
+  return resp.json();
+}
+
+export async function createGroup(accessToken, groupData) {
+  const resp = await fetch(`${ADMIN_URL}/groups`, {
+    method: 'POST',
+    headers: adminHeaders(accessToken),
+    body: JSON.stringify(groupData),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.errorMessage || 'Failed to create group');
+  }
+}
+
+export async function createSubGroup(accessToken, parentGroupId, groupData) {
+  const resp = await fetch(`${ADMIN_URL}/groups/${parentGroupId}/children`, {
+    method: 'POST',
+    headers: adminHeaders(accessToken),
+    body: JSON.stringify(groupData),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.errorMessage || 'Failed to create sub-group');
+  }
+}
+
+export async function updateGroup(accessToken, groupId, groupData) {
+  const resp = await fetch(`${ADMIN_URL}/groups/${groupId}`, {
+    method: 'PUT',
+    headers: adminHeaders(accessToken),
+    body: JSON.stringify(groupData),
+  });
+  if (!resp.ok) throw new Error('Failed to update group');
+}
+
+export async function deleteGroup(accessToken, groupId) {
+  const resp = await fetch(`${ADMIN_URL}/groups/${groupId}`, {
+    method: 'DELETE',
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to delete group');
+}
+
+export async function getGroupMembers(accessToken, groupId, first = 0, max = 100) {
+  const resp = await fetch(`${ADMIN_URL}/groups/${groupId}/members?first=${first}&max=${max}`, {
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to get group members');
+  return resp.json();
+}
+
+export async function addUserToGroup(accessToken, userId, groupId) {
+  const resp = await fetch(`${ADMIN_URL}/users/${userId}/groups/${groupId}`, {
+    method: 'PUT',
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to add user to group');
+}
+
+export async function removeUserFromGroup(accessToken, userId, groupId) {
+  const resp = await fetch(`${ADMIN_URL}/users/${userId}/groups/${groupId}`, {
+    method: 'DELETE',
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to remove user from group');
+}
+
+export async function getUserGroups(accessToken, userId) {
+  const resp = await fetch(`${ADMIN_URL}/users/${userId}/groups`, {
+    headers: adminHeaders(accessToken),
+  });
+  if (!resp.ok) throw new Error('Failed to get user groups');
+  return resp.json();
+}

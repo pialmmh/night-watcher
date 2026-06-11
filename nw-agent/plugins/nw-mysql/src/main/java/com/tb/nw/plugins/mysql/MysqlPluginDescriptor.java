@@ -1,19 +1,29 @@
 package com.tb.nw.plugins.mysql;
 
-import com.tb.nw.plugins.mysql.entities.MysqlActionPayload;
-import com.tb.nw.plugins.mysql.entities.MysqlObservationDetail;
+import com.tb.nw.plugins.mysql.events.MySqlCommandEvent;
+import com.tb.nw.plugins.mysql.events.MySqlCommandResult;
+import com.tb.nw.plugins.mysql.events.MySqlFenceMasterCommand;
+import com.tb.nw.plugins.mysql.events.MySqlHealthEvent;
+import com.tb.nw.plugins.mysql.events.MySqlPromoteSlaveCommand;
+import com.tb.nw.plugins.mysql.events.MySqlRemoteHealth;
+import com.tb.nw.plugins.mysql.events.MySqlSetReadOnlyCommand;
+import com.tb.nw.plugins.mysql.events.MySqlStartReplicaCommand;
+import com.tb.nw.plugins.mysql.events.MySqlStopReplicaCommand;
+import com.tb.nw.spi.CommandEvent;
+import com.tb.nw.spi.CommandResultEvent;
+import com.tb.nw.spi.HealthCheckEvent;
 import com.tb.nw.spi.PluginDescriptor;
-import com.tb.nw.spi.PluginEntity;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Singleton;
+
+import java.util.Set;
 
 /**
- * Single source of truth for the nw-mysql plugin's identity. Every typed
- * entity this plugin emits stamps its {@link #PLUGIN_ID} and
- * {@link #PLUGIN_VERSION}; the framework refuses to consume entities whose
+ * Single source of truth for the {@code nw-mysql} plugin's identity. Every
+ * typed event this plugin emits stamps its {@link #PLUGIN_ID} and
+ * {@link #PLUGIN_VERSION}; the framework refuses to consume events whose
  * stamp does not match the values here.
  *
- * <p>Version bumps require a clean rebuild — the framework does not run
+ * <p>Version bumps require a clean rebuild — the framework runs no
  * compatibility shims for older versions of the same plugin id.</p>
  */
 @ApplicationScoped
@@ -23,9 +33,25 @@ public class MysqlPluginDescriptor implements PluginDescriptor {
     public static final String PLUGIN_VERSION = "1.0.0";
     public static final String SERVICE_TYPE = "mysql";
 
-    @Override public String pluginId() { return PLUGIN_ID; }
+    @Override public String pluginId()      { return PLUGIN_ID; }
     @Override public String pluginVersion() { return PLUGIN_VERSION; }
-    @Override public String serviceType() { return SERVICE_TYPE; }
-    @Override public Class<? extends PluginEntity> observationDetailType() { return MysqlObservationDetail.class; }
-    @Override public Class<? extends PluginEntity> actionPayloadType() { return MysqlActionPayload.class; }
+    @Override public String serviceType()   { return SERVICE_TYPE; }
+
+    /** Single MySQL health-event shape today. Refines to {@link MySqlHealthEvent} when more probes arrive. */
+    @Override public Class<? extends HealthCheckEvent> healthEventType() { return MySqlRemoteHealth.class; }
+
+    /** Every concrete {@link MySqlCommandEvent} subtype this plugin's actions consume. */
+    @Override public Set<Class<? extends CommandEvent>> commandEventTypes() {
+        return Set.of(
+                MySqlPromoteSlaveCommand.class,
+                MySqlFenceMasterCommand.class,
+                MySqlSetReadOnlyCommand.class,
+                MySqlStartReplicaCommand.class,
+                MySqlStopReplicaCommand.class);
+    }
+
+    /** One result record serves all five commands — the Dispatcher's parse whitelist. */
+    @Override public Set<Class<? extends CommandResultEvent>> resultEventTypes() {
+        return Set.of(MySqlCommandResult.class);
+    }
 }

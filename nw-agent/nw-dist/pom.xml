@@ -21,6 +21,10 @@
             <groupId>com.telcobright.nw</groupId>
             <artifactId>nw-mysql</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.telcobright.nw</groupId>
+            <artifactId>nw-mock</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

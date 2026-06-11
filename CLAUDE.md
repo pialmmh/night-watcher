@@ -102,8 +102,8 @@ night-watcher/
 | 5601 | Wazuh Dashboard |
 | 7100 | Dashboard dev (Vite) |
 | 7101 | module-status-api (Python — legacy; dashboard repoint pending) |
-| 7102 | nw-agent status API (`/agent/info`) |
-| 7103 | nw-agent ActionEndpoint gRPC (future) |
+| 7102 | nw-agent HTTP: status API (`/agent/info`) + command door (`/agent/command`, JSON) |
+| 7103 | nw-agent ActionEndpoint mTLS gRPC (future hardening — command door moves here) |
 | 9200 | Wazuh Indexer (OpenSearch) |
 | 55000 | Wazuh API |
 
@@ -126,12 +126,26 @@ See `nw-agent/CLAUDE.md` for the full design. Short summary:
 - High-level entry classes are written as state machines using a small
   in-repo DSL (`nw-core/sm/`). `AgentLifecycleMachine` describes the agent's
   lifecycle; `FailoverCoordinator` describes the orchestration sequence.
-- One active MySQL investigator in the current cut:
-  `mysql.remote.client` — runs a configurable canary query (default
-  `SHOW DATABASES`) against the master from an app-tier host. Three
-  consecutive `DEAD` verdicts trigger the coordinator, which (today)
-  prints the demo failover lines to stdout. Real actions land when the
-  Dispatcher + ActionEndpoint do.
+- The act path is real: Dispatcher → command door (`/agent/command`, four
+  gates) → local `FailoverAction`s. The vote is real too: `coord/Resolver`
+  buckets fresh evidence per (target, seat, plugin), plugin
+  `HealthAggregator`s score each seat 0–1, deterministic verdict
+  UP/DEGRADED/SDOWN/ODOWN on every agent. With
+  `nw.failover.require-odown=true` strikes alone can't fire the
+  coordinator — a majority of seats must agree (ODOWN).
+- MySQL plugin probes in the current cut: `mysql.remote.client` (CLIENT
+  canary, default `SHOW DATABASES`) + `mysql.local` (LOCAL_SELF
+  replication confession). Plus 5 SQL actions, selector, plan generator.
+- **Mock plugin (`plugins/nw-mock`) — the full-pipeline test harness.**
+  File-driven "service" (`/tmp/nw-mock/{node}.state|.role`, per-seat
+  `@client`/`@peer` override files to simulate partitions). Three probes
+  (local/client/peer), aggregator, selector, plan generator, fence +
+  promote actions that rewrite the files. Tenant `mock` (profile dev,
+  BTCL etcd): run two agents on one box — recipe in
+  `nw-core/src/main/resources/config/tenants/mock/dev/profile-dev.yml`.
+  Verified 2026-06-07: minority-seat lie held at SDOWN (5/3 strikes, no
+  failover); true death → ODOWN → fence + promote across two agents in
+  13 s. `NW_CLUSTER_NAME` bumps to a pristine roles board for reruns.
 
 ## Identity (Keycloak)
 

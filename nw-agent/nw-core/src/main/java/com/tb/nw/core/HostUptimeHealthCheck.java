@@ -2,6 +2,7 @@ package com.tb.nw.core;
 
 import com.tb.nw.spi.HealthCheck;
 import com.tb.nw.spi.HealthReport;
+import com.tb.nw.spi.HealthState;
 import com.tb.nw.spi.PluginDescriptor;
 import com.tb.nw.spi.ProbeContext;
 import com.tb.nw.spi.Vantage;
@@ -16,13 +17,14 @@ import java.time.Instant;
 
 /**
  * Trivial built-in probe that reads {@code /proc/uptime}. Exists to prove
- * the SPI end-to-end before service-specific plugins land. Reports
- * {@code DEGRADED} if the host has been up &lt; 60 s (possibly mid-boot),
- * {@code FAST} otherwise. {@code UNKNOWN} if the file isn't readable
- * (e.g. running on Windows under tests).
+ * the SPI end-to-end before service-specific plugins land.
+ *
+ * <p>Reports {@code DEGRADED} if the host has been up &lt; 60 s (possibly
+ * mid-boot), {@code FAST} otherwise. {@code UNKNOWN} if the file isn't
+ * readable (e.g. running on Windows under tests).</p>
  */
 @ApplicationScoped
-public class HostUptimeHealthCheck implements HealthCheck<HostUptimeDetail> {
+public class HostUptimeHealthCheck implements HealthCheck<HostUptimeEvent> {
 
     private static final Path UPTIME = Path.of("/proc/uptime");
 
@@ -31,20 +33,23 @@ public class HostUptimeHealthCheck implements HealthCheck<HostUptimeDetail> {
     @Override public String id() { return "host.uptime"; }
     @Override public Vantage vantage() { return Vantage.LOCAL_SELF; }
     @Override public PluginDescriptor descriptor() { return descriptor; }
-    @Override public Class<HostUptimeDetail> detailType() { return HostUptimeDetail.class; }
+    @Override public Class<HostUptimeEvent> eventType() { return HostUptimeEvent.class; }
 
-    @Override public HealthReport<HostUptimeDetail> probe(ProbeContext ctx) {
+    @Override public HealthReport<HostUptimeEvent> probe(ProbeContext ctx) {
         Instant start = Instant.now();
         long uptimeSec = readUptimeSeconds();
+        String target = ctx.localNode();
+
         if (uptimeSec < 0) {
-            return HealthReport.unknown(Duration.ZERO,
-                    HostUptimeDetail.unreadable("/proc/uptime unreadable"));
+            return HealthReport.of(
+                    HostUptimeEvent.unreadable(target, "/proc/uptime unreadable"),
+                    Duration.ZERO);
         }
+
         Duration latency = Duration.between(start, Instant.now());
-        HostUptimeDetail detail = HostUptimeDetail.ok(uptimeSec, humanize(uptimeSec));
-        return uptimeSec < 60
-                ? HealthReport.degraded(latency, detail)
-                : HealthReport.fast(latency, detail);
+        HealthState state = uptimeSec < 60 ? HealthState.DEGRADED : HealthState.FAST;
+        HostUptimeEvent event = HostUptimeEvent.ok(target, state, uptimeSec, humanize(uptimeSec));
+        return HealthReport.of(event, latency);
     }
 
     private static long readUptimeSeconds() {

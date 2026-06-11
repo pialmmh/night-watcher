@@ -1,0 +1,44 @@
+# ============================================================================
+#  nw-agent  ·  tenant: bdcom  ·  profile: prod
+# ============================================================================
+# Placeholder — fill in real values when night-watcher actually deploys to
+# bdcom production.
+# ============================================================================
+
+nw:
+  agent:
+    node-name: ${NW_NODE_NAME}
+    cluster-name: bdcom-prod
+    cluster-type: MySqlMasterSlave
+    fabric-endpoints:
+      - http://127.0.0.1:2379                # TODO: real bdcom production peers
+    static-facets: ${NW_AGENT_STATIC_FACETS:}
+    heartbeat-interval-sec: 5
+    heartbeat-ttl-sec: 15
+
+  mysql:
+    local-host: 127.0.0.1
+    port: 3306
+    username: nw_monitor
+    client-target-host: ${NW_MYSQL_CLIENT_TARGET_HOST}
+    custom-query: SHOW DATABASES
+    fast-threshold-ms: 100
+    degraded-threshold-ms: 1000
+    dead-threshold-ms: 5000
+
+  failover:
+    failure-threshold: 3
+    trigger-investigators:
+      - mysql.remote.client
+    fence-timeout-sec: 10
+    promote-timeout-sec: 15
+
+quarkus:
+  http:
+    host: ${NW_BIND_HOST:127.0.0.1}
+    port: 7102
+  log:
+    level: INFO
+    category:
+      "com.tb.nw":
+        level: INFO

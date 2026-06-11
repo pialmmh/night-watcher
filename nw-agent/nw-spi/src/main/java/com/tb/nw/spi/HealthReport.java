@@ -1,40 +1,24 @@
 package com.tb.nw.spi;
 
 import java.time.Duration;
-import java.time.Instant;
 
 /**
- * Result of a single {@link HealthCheck#probe} invocation. The {@code detail}
- * is plugin-typed — every plugin defines its own {@link PluginEntity}
- * subtype carrying the fields downstream consumers (HealthAggregator,
- * FailoverPlanGenerator, FailoverAction) need. There is no untyped map.
+ * Thin wrapper a probe returns: the typed {@link HealthCheckEvent} it minted,
+ * plus the wall-clock latency the probe observed while gathering it.
  *
- * <p>For unknown / not-applicable cases the plugin must still supply a
- * non-null detail (typically a "no-signal" instance with zeroed fields and
- * a populated {@code errorMessage}-like field). The framework refuses to
- * accept a null detail because there would be no plugin-version stamp on it.</p>
+ * <p>The framework reads both — the event's {@link HealthCheckEvent#healthState}
+ * drives the 3-strike SDOWN counter; the {@code latency} is exposed on the
+ * {@link Observation} envelope for the Resolver's bucketing math and dashboards.</p>
  *
- * @param <T> plugin-specific detail type implementing {@link PluginEntity}
+ * @param <T> the {@link HealthCheckEvent} subtype this report wraps
  */
-public record HealthReport<T extends PluginEntity>(
-        HealthState state,
-        Duration latency,
-        T detail,
-        Instant freshness
+public record HealthReport<T extends HealthCheckEvent>(
+        T event,
+        Duration latency
 ) {
-    public static <T extends PluginEntity> HealthReport<T> fast(Duration latency, T detail) {
-        return new HealthReport<>(HealthState.FAST, latency, detail, Instant.now());
-    }
+    public HealthState state() { return event.healthState(); }
 
-    public static <T extends PluginEntity> HealthReport<T> degraded(Duration latency, T detail) {
-        return new HealthReport<>(HealthState.DEGRADED, latency, detail, Instant.now());
-    }
-
-    public static <T extends PluginEntity> HealthReport<T> dead(Duration latency, T detail) {
-        return new HealthReport<>(HealthState.DEAD, latency, detail, Instant.now());
-    }
-
-    public static <T extends PluginEntity> HealthReport<T> unknown(Duration latency, T detail) {
-        return new HealthReport<>(HealthState.UNKNOWN, latency, detail, Instant.now());
+    public static <T extends HealthCheckEvent> HealthReport<T> of(T event, Duration latency) {
+        return new HealthReport<>(event, latency);
     }
 }

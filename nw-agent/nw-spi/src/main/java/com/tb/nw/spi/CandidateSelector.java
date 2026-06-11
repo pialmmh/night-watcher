@@ -10,9 +10,9 @@ import java.util.Optional;
  * <p>Implementations are pure functions: same inputs → same chosen NodeId,
  * so coordinator and follower-shadow agree.</p>
  *
- * @param <T> plugin-specific observation detail (what's inside each ObservationView)
+ * @param <T> plugin-specific {@link HealthCheckEvent} subtype (what's inside each ObservationView)
  */
-public interface CandidateSelector<T extends PluginEntity> {
+public interface CandidateSelector<T extends HealthCheckEvent> {
 
     /** Owning plugin's descriptor. */
     PluginDescriptor descriptor();
