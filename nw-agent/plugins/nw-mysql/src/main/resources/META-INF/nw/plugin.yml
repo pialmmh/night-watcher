@@ -25,31 +25,39 @@ contracts:
     - mysql-client
     - witness
 
-  actions_declared: []
+  # NOTE: this manifest is DESCRIPTIVE — nothing parses it at runtime; the
+  # MysqlPluginDescriptor class is the enforced source of truth. Keep this
+  # file matching the code or delete it; a manifest that lies is worse than
+  # none. Synced to code 2026-06-12.
+
+  actions_declared:
+    - id: mysql.fence-self
+      command: fence-master      # read_only=1 + kill client connections
+    - id: mysql.promote-self
+      command: promote-slave     # GTID wait -> stop/reset replica -> read_only=0
+    - id: mysql.set-read-only
+      command: set-read-only
+    - id: mysql.start-replica
+      command: start-replica
+    - id: mysql.stop-replica
+      command: stop-replica
 
   investigators_declared:
-    # Single active investigator in the current cut.
     - id: mysql.remote.client
       vantage: client
       requires_facets: [mysql-client-here]
-      target_from: [nw.mysql.client-target-host, nw.mysql.remote-host]
+      target_from: nw.mysql.client-target-host
       query_from: nw.mysql.custom-query        # default "SHOW DATABASES"
-      failure_threshold: 3                     # 3 DEAD verdicts → master dead
+    - id: mysql.local
+      vantage: local-self
+      requires_facets: [mysql-running-here]
+      reads: "read_only, replica threads, lag, uptime, binlog-dump count"
 
-    # Dormant — source preserved, CDI scope removed. Bring back when the
-    # local-self / remote-peer vantages are re-enabled.
-    - id: mysql.local.master
-      vantage: local-self
-      status: dormant
-    - id: mysql.local.slave
-      vantage: local-self
-      status: dormant
-    - id: mysql.remote.master
-      vantage: remote-peer
-      status: dormant
-    - id: mysql.remote.slave
-      vantage: remote-peer
-      status: dormant
+  # Planned (Doc-V3.0 roles 2-3): mysql.master.self, mysql.master.slaves,
+  # mysql.slave.master-canary (remote-peer).
 
 permission_matrix_defaults: {}
-resolver_policy_defaults: {}
+resolver_policy_defaults:
+  # MysqlHealthAggregator: freshest-per-publisher, FAST=1.0 DEGRADED=0.5
+  # DEAD=0.0 UNKNOWN=skip, averaged per (target, vantage) bucket.
+  down_ceiling: 0.25

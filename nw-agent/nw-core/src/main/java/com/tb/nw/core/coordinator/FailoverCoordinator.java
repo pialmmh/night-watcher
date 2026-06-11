@@ -74,6 +74,7 @@ public class FailoverCoordinator {
     @Inject ObservationCache cache;
     @Inject Dispatcher dispatcher;
     @Inject Instance<FailoverPlanGenerator<?, ?>> planGenerators;
+    @Inject com.tb.nw.core.vote.Resolver resolver;
 
     private final AtomicReference<StateMap<FailoverCoordinator>> machine = new AtomicReference<>();
     private final AtomicReference<MasterDeadDetected> lastTrigger = new AtomicReference<>();
@@ -318,11 +319,18 @@ public class FailoverCoordinator {
                 roles.all(),
                 observationsForPlugin(generator.descriptor().pluginId()));
         try {
-            return generator.generate(Verdict.SDOWN, view);
+            return generator.generate(currentVerdict(), view);
         } catch (Exception e) {
             LOG.warnf(e, "plan generation failed");
             return null;
         }
+    }
+
+    /** The Resolver's live verdict for the triggering target; SDOWN when unscored. */
+    private Verdict currentVerdict() {
+        MasterDeadDetected trig = lastTrigger.get();
+        if (trig == null) return Verdict.SDOWN;
+        return resolver.verdictFor(trig.target()).orElse(Verdict.SDOWN);
     }
 
     private FailoverPlanGenerator<?, ?> pickGenerator() {
