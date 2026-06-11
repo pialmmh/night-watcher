@@ -48,7 +48,8 @@ public class Dispatcher {
     @Inject AgentDirectory directory;
     @Inject ObjectMapper json;
 
-    private final HttpClient http = HttpClient.newBuilder()
+    /** Package-private so tests can point delivery at a stub server's client. */
+    HttpClient http = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(2))
             .build();
 

@@ -4,7 +4,7 @@ import com.tb.nw.plugins.mock.MockConfig;
 import com.tb.nw.spi.HealthState;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -32,11 +32,12 @@ public class MockStateStore {
 
     @Inject MockConfig cfg;
 
-    /** Local node name, read once from the agent's own config key. */
+    /** Injected, not located — the plugin can't depend on core's AgentConfig type. */
+    @Inject @ConfigProperty(name = "nw.agent.node-name", defaultValue = "unknown")
+    String nodeName;
+
     public String localNode() {
-        return ConfigProvider.getConfig()
-                .getOptionalValue("nw.agent.node-name", String.class)
-                .orElse("unknown");
+        return nodeName;
     }
 
     public boolean stateDirExists() {

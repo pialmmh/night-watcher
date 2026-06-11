@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
@@ -78,6 +80,15 @@ public class ObservationCache {
     private final ConcurrentHashMap<ObsKey, Observation<?>> current = new ConcurrentHashMap<>();
     private final CopyOnWriteArrayList<Consumer<ChangeEvent>> listeners = new CopyOnWriteArrayList<>();
 
+    /**
+     * Listener dispatch hops onto this single thread so no subscriber can
+     * ever block the etcd watch (vert.x event-loop) thread that jetcd itself
+     * needs. Single-threaded → event order is preserved. Package-private so
+     * tests can substitute a same-thread executor.
+     */
+    ExecutorService listenerExecutor =
+            Executors.newSingleThreadExecutor(r -> new Thread(r, "nw-cache-events"));
+
     private FabricKV.Watch watchHandle;
 
     public record ObsKey(String target, String publisher, String investigator) {}
@@ -107,6 +118,7 @@ public class ObservationCache {
                 LOG.debugf("watch close error: %s", e.getMessage());
             }
         }
+        listenerExecutor.shutdownNow();
         current.clear();
     }
 
@@ -154,7 +166,7 @@ public class ObservationCache {
     /** Total entries in cache — quick stat for the status endpoint. */
     public int size() { return current.size(); }
 
-    /** Subscribe to cache change events. Listener is called on the watcher thread. */
+    /** Subscribe to cache change events. Listeners run on the nw-cache-events thread, in event order. */
     public void addListener(Consumer<ChangeEvent> listener) {
         listeners.add(listener);
     }
@@ -191,11 +203,13 @@ public class ObservationCache {
     }
 
     private void fire(ChangeEvent ev) {
-        for (Consumer<ChangeEvent> l : listeners) {
-            try { l.accept(ev); } catch (Exception e) {
-                LOG.warnf(e, "observation listener threw");
+        listenerExecutor.execute(() -> {
+            for (Consumer<ChangeEvent> l : listeners) {
+                try { l.accept(ev); } catch (Exception e) {
+                    LOG.warnf(e, "observation listener threw");
+                }
             }
-        }
+        });
     }
 
     private ObsKey parseKey(String key) {

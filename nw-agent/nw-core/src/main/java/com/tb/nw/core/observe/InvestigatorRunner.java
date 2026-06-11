@@ -99,7 +99,7 @@ public class InvestigatorRunner {
         return new ProbeContext(
                 cfg.clusterName(),
                 cfg.nodeName(),
-                Duration.ofSeconds(4),
+                Duration.ofSeconds(cfg.probeDeadlineSec()),
                 fabric);
     }
 }

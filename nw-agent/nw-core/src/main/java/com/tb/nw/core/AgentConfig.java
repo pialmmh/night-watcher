@@ -49,6 +49,10 @@ public interface AgentConfig {
     @WithDefault("15")
     int heartbeatTtlSec();
 
+    /** Per-probe deadline (seconds). Must stay inside the 5 s investigator tick. */
+    @WithDefault("4")
+    int probeDeadlineSec();
+
     /**
      * Host peers should use to reach this agent's command door. Defaults to
      * the HTTP bind host when unset — override (env
