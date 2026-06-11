@@ -1,8 +1,11 @@
 package com.tb.nw.core.lifecycle;
 
+import com.tb.nw.core.FabricProducer;
+import com.tb.nw.core.observe.InvestigatorRunner;
+
 import com.tb.nw.core.AgentConfig;
-import com.tb.nw.core.AgentState;
-import com.tb.nw.core.FacetPublisher;
+import com.tb.nw.core.lifecycle.AgentState;
+import com.tb.nw.core.observe.FacetPublisher;
 import com.tb.nw.core.lifecycle.events.DrainRequested;
 import com.tb.nw.core.lifecycle.events.FabricReachable;
 import com.tb.nw.core.lifecycle.events.FabricUnreachable;

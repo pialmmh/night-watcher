@@ -1,5 +1,7 @@
 package com.tb.nw.core;
 
+import com.tb.nw.core.lifecycle.Heartbeat;
+
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 

@@ -1,5 +1,8 @@
 package com.tb.nw.core;
 
+import com.tb.nw.core.cache.ObservationCache;
+import com.tb.nw.core.observe.HostUptimeEvent;
+
 import com.tb.nw.spi.CommandEvent;
 import com.tb.nw.spi.HealthCheckEvent;
 import com.tb.nw.spi.PluginDescriptor;

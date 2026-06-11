@@ -1,5 +1,10 @@
 package com.tb.nw.core.sm;
 
+import com.tb.nw.core.coordinator.FailoverCoordinator;
+import com.tb.nw.core.coordinator.events.MasterFenced;
+import com.tb.nw.core.coordinator.events.SlavePromoted;
+import com.tb.nw.core.lifecycle.AgentLifecycleMachine;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
