@@ -1,0 +1,1 @@
+code-master opt-in marker — the SessionStart hook injects the /code-master skill when this tracked file exists.
