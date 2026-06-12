@@ -16,3 +16,5 @@ dashboard/test-results/
 
 # Maven
 nw-agent/**/target/
+.claude/settings.local.json
+.claude/.devrole
