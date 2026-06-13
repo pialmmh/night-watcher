@@ -63,13 +63,20 @@ night-watcher/
 │   ├── nw-spi/             # plugin SPI (HealthCheck, FailoverAction, …)
 │   ├── nw-fabric-api/      # Fabric interfaces (KV / lease / lock / txn)
 │   ├── nw-fabric-etcd/     # jetcd-backed Fabric impl
-│   ├── nw-core/            # the agent — lifecycle SM, coord, observation cache
-│   │   ├── sm/             # minimal StateMap DSL (routesphere style)
-│   │   ├── lifecycle/      # AgentLifecycleMachine
-│   │   └── coord/          # FailoverCoordinator + FailureTracker
-│   ├── plugins/nw-mysql/   # MySQL plugin
-│   │   ├── probe/          # observe side: MySqlRemoteClient + 4 dormant probes
-│   │   └── orchestrator/   # act side: placeholder for FailoverAction impls
+│   ├── nw-core/            # the agent — every service split into the code-master
+│   │   │                   #   folder vocabulary: api/ spi/ publishes/ internal/ dependencies/
+│   │   ├── observe/        #   probe runner            (api/ publishes/ internal/ dependencies/)
+│   │   ├── cache/          #   observation cache       (api/)
+│   │   ├── vote/           #   Resolver + FailureTracker (api/ internal/)
+│   │   ├── coordinator/    #   FailoverCoordinator     (api/ publishes/ dependencies/)
+│   │   ├── boards/         #   roles · directory · gate (api/)
+│   │   ├── dispatch/ door/ #   command courier + gated door
+│   │   ├── lifecycle/      #   AgentLifecycleMachine + status (api/ publishes/ internal/)
+│   │   ├── sm/             #   minimal StateMap DSL    (api/)
+│   │   └── dependencies/   #   agent wiring: AgentConfig · FabricProducer · PluginRegistry
+│   ├── plugins/nw-mysql/   # MySQL plugin  (api/ = probes+actions, publishes/ = events,
+│   │                       #                dependencies/ = config+conns)
+│   └── plugins/nw-mock/    # full-pipeline harness (same shape)
 │   ├── nw-dist/            # assembly module — produces the runner JAR
 │   └── configs/sample-3node/  # role-split env files for a 3-host deploy
 │
@@ -124,10 +131,10 @@ See `nw-agent/CLAUDE.md` for the full design. Short summary:
   `HealthAggregator`, `CandidateSelector`, `FailoverPlanGenerator`,
   `ClusterCondition`, `StatefulAction`.
 - High-level entry classes are written as state machines using a small
-  in-repo DSL (`nw-core/sm/`). `AgentLifecycleMachine` describes the agent's
-  lifecycle; `FailoverCoordinator` describes the orchestration sequence.
+  in-repo DSL (`nw-core/.../sm/api/`). `AgentLifecycleMachine` describes the
+  agent's lifecycle; `FailoverCoordinator` describes the orchestration sequence.
 - The act path is real: Dispatcher → command door (`/agent/command`, four
-  gates) → local `FailoverAction`s. The vote is real too: `coord/Resolver`
+  gates) → local `FailoverAction`s. The vote is real too: `vote/api/Resolver`
   buckets fresh evidence per (target, seat, plugin), plugin
   `HealthAggregator`s score each seat 0–1, deterministic verdict
   UP/DEGRADED/SDOWN/ODOWN on every agent. With
@@ -197,5 +204,5 @@ once the per-service split is done.
 - Dashboard dev port: 7100. Never use the 3000 range.
 - MySQL partitions: create all partitions in `CREATE TABLE`, not via `ALTER`.
 - For new long-running services / orchestrators, prefer the StateMap DSL
-  (see `nw-agent/nw-core/sm/`) so the top of the class reads as named
+  (see `nw-agent/nw-core/.../sm/api/`) so the top of the class reads as named
   business phases.
