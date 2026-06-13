@@ -111,4 +111,17 @@ public record MySqlRemoteHealth(
                 connectedReplicas, serverUptimeSeconds, readOnly,
                 replicaIoRunning, replicaSqlRunning, secondsBehindMaster, lastIoError, lastSqlError);
     }
+
+    /**
+     * Role 2 self-assertion — this slave is healthy and caught up enough to
+     * assume the master role: both replica threads running and lag within
+     * {@code maxLagSec} ("does not lack in binlog"). A master-side report (no
+     * replica threads) is never promotable by this check.
+     */
+    public boolean promotable(long maxLagSec) {
+        return Boolean.TRUE.equals(replicaIoRunning)
+                && Boolean.TRUE.equals(replicaSqlRunning)
+                && secondsBehindMaster != null
+                && secondsBehindMaster <= maxLagSec;
+    }
 }

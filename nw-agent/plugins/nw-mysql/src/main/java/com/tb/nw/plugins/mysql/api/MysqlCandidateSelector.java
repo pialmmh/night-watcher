@@ -1,6 +1,7 @@
 package com.tb.nw.plugins.mysql.api;
 
 import com.tb.nw.plugins.mysql.api.MysqlPluginDescriptor;
+import com.tb.nw.plugins.mysql.dependencies.MysqlConfig;
 import com.tb.nw.plugins.mysql.publishes.MySqlRemoteHealth;
 import com.tb.nw.spi.api.CandidateSelector;
 import com.tb.nw.spi.api.HealthState;
@@ -34,6 +35,13 @@ public class MysqlCandidateSelector implements CandidateSelector<MySqlRemoteHeal
     private static final long FRESHNESS_SECONDS = 30;
 
     @Inject MysqlPluginDescriptor descriptor;
+    @Inject MysqlConfig cfg;
+
+    /** Role 2 lag ceiling; overridden from config at startup. Default keeps unit tests config-free. */
+    long maxPromotionLagSec = 10;
+
+    @jakarta.annotation.PostConstruct
+    void init() { maxPromotionLagSec = cfg.maxPromotionLagSec(); }
 
     @Override public PluginDescriptor descriptor() { return descriptor; }
 
@@ -72,10 +80,11 @@ public class MysqlCandidateSelector implements CandidateSelector<MySqlRemoteHeal
         if (obs.state() == HealthState.DEAD || obs.state() == HealthState.UNKNOWN) return Optional.empty();
 
         MySqlRemoteHealth health = obs.event();
-        if (!Boolean.TRUE.equals(health.replicaIoRunning())
-                || !Boolean.TRUE.equals(health.replicaSqlRunning())) return Optional.empty();
+        // Role 2 gate — the slave's own "I can assume master" assertion: replica
+        // threads running AND caught up within the lag window. Promoting a lagging
+        // slave loses writes, so a slave that lacks in binlog is no candidate.
+        if (!health.promotable(maxPromotionLagSec)) return Optional.empty();
 
-        long lag = health.secondsBehindMaster() == null ? Long.MAX_VALUE : health.secondsBehindMaster();
-        return Optional.of(new Scored(view.target(), lag));
+        return Optional.of(new Scored(view.target(), health.secondsBehindMaster()));
     }
 }

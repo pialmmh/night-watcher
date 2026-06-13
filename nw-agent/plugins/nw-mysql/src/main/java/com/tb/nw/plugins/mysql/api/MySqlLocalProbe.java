@@ -2,6 +2,7 @@ package com.tb.nw.plugins.mysql.api;
 
 import com.tb.nw.plugins.mysql.dependencies.MysqlConfig;
 import com.tb.nw.plugins.mysql.dependencies.MysqlConnections;
+import com.tb.nw.plugins.mysql.internal.MysqlLocalGrader;
 import com.tb.nw.plugins.mysql.api.MysqlPluginDescriptor;
 import com.tb.nw.plugins.mysql.publishes.MySqlRemoteHealth;
 import com.tb.nw.spi.api.HealthCheck;
@@ -53,8 +54,12 @@ public class MySqlLocalProbe implements HealthCheck<MySqlRemoteHealth> {
             long dumpThreads = countBinlogDumpThreads(c);
             Duration latency = Duration.between(start, Instant.now());
 
+            HealthState state = MysqlLocalGrader.grade(latency.toMillis(), readOnly,
+                    replica.io(), replica.sql(), replica.behind(),
+                    cfg.degradedThresholdMs(), cfg.maxPromotionLagSec());
+
             MySqlRemoteHealth event = MySqlRemoteHealth.ofLocalProbe(
-                    classify(latency), ctx.localNode(),
+                    state, ctx.localNode(),
                     latency.toNanos(), readOnly,
                     replica.io(), replica.sql(), replica.behind(),
                     replica.lastIo(), replica.lastSql(),
@@ -70,11 +75,6 @@ public class MySqlLocalProbe implements HealthCheck<MySqlRemoteHealth> {
                     0L, 0L, e.getMessage());
             return HealthReport.of(event, latency);
         }
-    }
-
-    /** Local socket answering at all is the signal; grade only on gross slowness. */
-    private HealthState classify(Duration latency) {
-        return latency.toMillis() <= cfg.degradedThresholdMs() ? HealthState.FAST : HealthState.DEGRADED;
     }
 
     // ── local status reads ──

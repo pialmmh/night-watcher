@@ -83,6 +83,15 @@ public interface MysqlConfig {
     int queryTimeoutSec();
 
     /**
+     * Role 2 gate — the maximum replication lag (seconds behind source) at which
+     * a slave still counts as "does not lack in binlog" and may assume the master
+     * role. A slave lagging beyond this reports DEGRADED (not promotable) and the
+     * CandidateSelector skips it: promoting a lagging slave loses writes.
+     */
+    @WithDefault("10")
+    long maxPromotionLagSec();
+
+    /**
      * Replication user the start-replica action wires into CHANGE
      * REPLICATION SOURCE / CHANGE MASTER. From env
      * {@code NW_MYSQL_REPLICATION_USER} — commands carry only a credentials

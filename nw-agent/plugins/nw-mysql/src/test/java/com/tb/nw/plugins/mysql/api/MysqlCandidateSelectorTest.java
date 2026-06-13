@@ -45,7 +45,7 @@ class MysqlCandidateSelectorTest {
 
     @Test void picksTheLeastLaggedHealthySlave() {
         var pick = selector.select(List.of(
-                slave("s1", HealthState.FAST, true, true, 12L),
+                slave("s1", HealthState.FAST, true, true, 8L),
                 slave("s2", HealthState.FAST, true, true, 3L)), ctx());
         assertEquals("s2", pick.orElseThrow().value());
     }
@@ -53,7 +53,7 @@ class MysqlCandidateSelectorTest {
     @Test void rejectsStoppedReplicaThreads() {
         var pick = selector.select(List.of(
                 slave("s1", HealthState.FAST, false, true, 0L),
-                slave("s2", HealthState.FAST, true, true, 50L)), ctx());
+                slave("s2", HealthState.FAST, true, true, 5L)), ctx());
         assertEquals("s2", pick.orElseThrow().value());
     }
 
@@ -63,11 +63,19 @@ class MysqlCandidateSelectorTest {
         assertTrue(pick.isEmpty(), "an empty pool is a refusal, never a guess");
     }
 
-    @Test void nullLagRanksLast() {
+    @Test void unknownLagIsNotPromotable() {
+        // null lag = the slave can't prove it's caught up -> not a candidate; the caught-up slave wins
         var pick = selector.select(List.of(
                 slave("s1", HealthState.FAST, true, true, null),
-                slave("s2", HealthState.FAST, true, true, 999L)), ctx());
+                slave("s2", HealthState.FAST, true, true, 5L)), ctx());
         assertEquals("s2", pick.orElseThrow().value());
+    }
+
+    @Test void rejectsSlaveLaggingBeyondCeiling() {
+        // lacks in binlog beyond the promotion window -> promoting it would lose writes
+        var pick = selector.select(List.of(
+                slave("s1", HealthState.FAST, true, true, 999L)), ctx());
+        assertTrue(pick.isEmpty());
     }
 
     @Test void tieBreaksByNodeName() {
