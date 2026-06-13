@@ -91,6 +91,14 @@ public interface MysqlConfig {
     @WithDefault("10")
     long maxPromotionLagSec();
 
+    /** systemd unit name the local probe's systemctl check inspects. */
+    @WithDefault("mysql")
+    String serviceName();
+
+    /** MySQL data directory whose filesystem the local probe's disk check inspects. */
+    @WithDefault("/var/lib/mysql")
+    String dataDir();
+
     /**
      * Replication user the start-replica action wires into CHANGE
      * REPLICATION SOURCE / CHANGE MASTER. From env

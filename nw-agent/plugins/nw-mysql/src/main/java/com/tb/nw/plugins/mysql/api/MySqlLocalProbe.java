@@ -2,10 +2,12 @@ package com.tb.nw.plugins.mysql.api;
 
 import com.tb.nw.plugins.mysql.dependencies.MysqlConfig;
 import com.tb.nw.plugins.mysql.dependencies.MysqlConnections;
-import com.tb.nw.plugins.mysql.internal.MysqlLocalGrader;
+import com.tb.nw.plugins.mysql.dependencies.MysqlOsProbe;
+import com.tb.nw.plugins.mysql.internal.MysqlLocalChecks;
 import com.tb.nw.plugins.mysql.api.MysqlPluginDescriptor;
 import com.tb.nw.plugins.mysql.publishes.MySqlRemoteHealth;
 import com.tb.nw.spi.api.HealthCheck;
+import com.tb.nw.spi.api.HealthChecks;
 import com.tb.nw.spi.api.HealthReport;
 import com.tb.nw.spi.api.HealthState;
 import com.tb.nw.spi.api.PluginDescriptor;
@@ -13,6 +15,7 @@ import com.tb.nw.spi.api.ProbeContext;
 import com.tb.nw.spi.api.Vantage;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.jboss.logging.Logger;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -33,8 +36,11 @@ import java.util.Set;
 @ApplicationScoped
 public class MySqlLocalProbe implements HealthCheck<MySqlRemoteHealth> {
 
+    private static final Logger LOG = Logger.getLogger(MySqlLocalProbe.class);
+
     @Inject MysqlConnections conns;
     @Inject MysqlConfig cfg;
+    @Inject MysqlOsProbe os;
     @Inject MysqlPluginDescriptor descriptor;
 
     @Override public String id() { return "mysql.local"; }
@@ -54,12 +60,14 @@ public class MySqlLocalProbe implements HealthCheck<MySqlRemoteHealth> {
             long dumpThreads = countBinlogDumpThreads(c);
             Duration latency = Duration.between(start, Instant.now());
 
-            HealthState state = MysqlLocalGrader.grade(latency.toMillis(), readOnly,
-                    replica.io(), replica.sql(), replica.behind(),
-                    cfg.degradedThresholdMs(), cfg.maxPromotionLagSec());
+            HealthChecks.Verdict verdict = MysqlLocalChecks.evaluate(
+                    os.serviceActive(), os.dataDiskHasSpace(),
+                    readOnly, replica.io(), replica.sql(), replica.behind(),
+                    cfg.maxPromotionLagSec());
+            if (!verdict.up()) LOG.infof("mysql.local %s: %s", verdict.state(), verdict.summary());
 
             MySqlRemoteHealth event = MySqlRemoteHealth.ofLocalProbe(
-                    state, ctx.localNode(),
+                    verdict.state(), ctx.localNode(),
                     latency.toNanos(), readOnly,
                     replica.io(), replica.sql(), replica.behind(),
                     replica.lastIo(), replica.lastSql(),

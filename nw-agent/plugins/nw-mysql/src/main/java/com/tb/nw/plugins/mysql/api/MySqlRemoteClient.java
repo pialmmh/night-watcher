@@ -2,6 +2,7 @@ package com.tb.nw.plugins.mysql.api;
 
 import com.tb.nw.plugins.mysql.dependencies.MysqlConfig;
 import com.tb.nw.plugins.mysql.dependencies.MysqlConnections;
+import com.tb.nw.plugins.mysql.internal.MysqlClientChecks;
 import com.tb.nw.plugins.mysql.api.MysqlPluginDescriptor;
 import com.tb.nw.plugins.mysql.publishes.MySqlRemoteHealth;
 import com.tb.nw.spi.api.HealthCheck;
@@ -75,7 +76,8 @@ public class MySqlRemoteClient implements HealthCheck<MySqlRemoteHealth> {
         try (Connection c = conns.openClientTarget()) {
             Canary canary = runCanary(c, query, queryTimeoutSec(ctx, start));
             Enrichment extra = enrichBestEffort(c);
-            HealthState state = classify(canary.latency(), canary.hasRow());
+            HealthState state = MysqlClientChecks.evaluate(canary.hasRow(), canary.latency().toMillis(),
+                    cfg.fastThresholdMs(), cfg.deadThresholdMs()).state();
 
             MySqlRemoteHealth event = MySqlRemoteHealth.ofClientProbe(
                     state, host,
@@ -121,15 +123,6 @@ public class MySqlRemoteClient implements HealthCheck<MySqlRemoteHealth> {
         long deadSec = Math.max(1, cfg.deadThresholdMs() / 1000);
         long bound = Math.min(Math.min(Math.max(1, remainingSec), cfg.queryTimeoutSec()), deadSec);
         return (int) Math.max(1, bound);
-    }
-
-    /** Latency + row-presence → the grading contract in the class javadoc. */
-    private HealthState classify(Duration latency, boolean hasRow) {
-        if (!hasRow) return HealthState.DEGRADED;
-        long ms = latency.toMillis();
-        if (ms <= cfg.fastThresholdMs()) return HealthState.FAST;
-        if (ms <= cfg.deadThresholdMs()) return HealthState.DEGRADED;
-        return HealthState.DEAD;
     }
 
     // ── best-effort enrichment over the same client connection ──
