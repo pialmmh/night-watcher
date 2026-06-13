@@ -40,7 +40,7 @@ class GroupPlanGeneratorTest {
     }
 
     @Test void oneMemberPlanIsJustThatMembersSubPlan() {
-        MemberPlanSource src = (mem, v) -> Optional.of(sub(List.of(action("promote", "promote slave", "node-b"))));
+        MemberPlanSource src = (mem, v, epoch) -> Optional.of(sub(List.of(action("promote", "promote slave", "node-b"))));
         Plan<CommandEvent> plan = gen.generate(group(m("mysql", 1)), Verdict.ODOWN, 7, Instant.EPOCH, src);
         assertEquals(1, plan.steps().size());
         assertEquals(0, plan.steps().get(0).index());
@@ -49,7 +49,7 @@ class GroupPlanGeneratorTest {
 
     @Test void multiMemberConcatenatesInPromoteOrderWithContiguousIndex() {
         FailoverGroup g = group(m("sigtran", 4), m("mysql", 2), m("redis", 3));
-        MemberPlanSource src = (mem, v) -> switch (mem.type()) {
+        MemberPlanSource src = (mem, v, epoch) -> switch (mem.type()) {
             case "mysql" -> Optional.of(sub(List.of(
                     action("fence", "fence master", "node-a"), action("promote", "promote slave", "node-b"))));
             case "redis" -> Optional.of(sub(List.of(action("promote", "REPLICAOF NO ONE", "node-b"))));
@@ -64,7 +64,7 @@ class GroupPlanGeneratorTest {
     }
 
     @Test void memberWithNoSubPlanIsSkipped() {
-        MemberPlanSource src = (mem, v) -> mem.type().equals("mysql")
+        MemberPlanSource src = (mem, v, epoch) -> mem.type().equals("mysql")
                 ? Optional.of(sub(List.of(action("promote", "promote slave", "node-b")))) : Optional.empty();
         Plan<CommandEvent> plan = gen.generate(group(m("mysql", 1), m("ghost", 2)),
                 Verdict.ODOWN, 7, Instant.EPOCH, src);
@@ -72,7 +72,7 @@ class GroupPlanGeneratorTest {
     }
 
     @Test void planCarriesDomainIdAndEpoch() {
-        MemberPlanSource src = (mem, v) -> Optional.of(sub(List.of(action("promote", "x", "node-b"))));
+        MemberPlanSource src = (mem, v, epoch) -> Optional.of(sub(List.of(action("promote", "x", "node-b"))));
         Plan<CommandEvent> plan = gen.generate(group(m("mysql", 1)), Verdict.ODOWN, 42, Instant.EPOCH, src);
         assertEquals("btcl-sms-failover", plan.id());
         assertEquals("btcl-sms", plan.cluster());

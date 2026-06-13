@@ -15,5 +15,6 @@ import java.util.Optional;
  */
 @FunctionalInterface
 public interface MemberPlanSource {
-    Optional<Plan<? extends CommandEvent>> planFor(Member member, Verdict verdict);
+    /** @param failoverEpoch the group's epoch, stamped into the member's commands */
+    Optional<Plan<? extends CommandEvent>> planFor(Member member, Verdict verdict, long failoverEpoch);
 }

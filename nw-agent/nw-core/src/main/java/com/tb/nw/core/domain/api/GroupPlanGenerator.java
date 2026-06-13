@@ -31,7 +31,7 @@ public class GroupPlanGenerator {
         List<PlanStep<CommandEvent>> steps = new ArrayList<>();
         int index = 0;
         for (Member member : group.orderedMembers()) {
-            Optional<Plan<? extends CommandEvent>> sub = memberPlans.planFor(member, verdict);
+            Optional<Plan<? extends CommandEvent>> sub = memberPlans.planFor(member, verdict, failoverEpoch);
             if (sub.isEmpty()) continue;
             for (PlanStep<? extends CommandEvent> step : sub.get().steps()) {
                 steps.add(new PlanStep<>(index++, step.kind(),
