@@ -1,4 +1,4 @@
-package com.tb.nw.fabric.etcd;
+package com.tb.nw.fabric.internal;
 
 import com.tb.nw.fabric.api.FabricException;
 import com.tb.nw.fabric.api.FabricLease;

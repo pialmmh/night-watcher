@@ -8,7 +8,7 @@ import com.tb.nw.core.observe.FacetRegistry;
 import com.tb.nw.core.observe.ObservationPublisher;
 import com.tb.nw.core.vote.Resolver;
 
-import com.tb.nw.fabric.etcd.EtcdFabric;
+import com.tb.nw.fabric.internal.EtcdFabric;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;

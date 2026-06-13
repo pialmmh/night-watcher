@@ -1,7 +1,7 @@
 package com.tb.nw.core;
 
 import com.tb.nw.fabric.api.Fabric;
-import com.tb.nw.fabric.etcd.EtcdFabric;
+import com.tb.nw.fabric.internal.EtcdFabric;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Disposes;
 import jakarta.enterprise.inject.Produces;

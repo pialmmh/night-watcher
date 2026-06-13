@@ -13,7 +13,7 @@ import com.tb.nw.core.lifecycle.events.FacetsDetected;
 import com.tb.nw.core.lifecycle.events.InvestigatorsArmed;
 import com.tb.nw.core.sm.StateMap;
 import com.tb.nw.fabric.api.Fabric;
-import com.tb.nw.fabric.etcd.EtcdFabric;
+import com.tb.nw.fabric.internal.EtcdFabric;
 import io.quarkus.runtime.Startup;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.annotation.PostConstruct;
