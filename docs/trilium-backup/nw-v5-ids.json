@@ -71,5 +71,16 @@
  "c2": "VnA1BQBUHDDS",
  "c3": "mwdwMTk9B5SB",
  "c4": "KIfiHvvAn0vu",
- "c5": "LolOIt8LPUI3"
+ "c5": "LolOIt8LPUI3",
+ "svc.domain": "ITEbbTPjjBdn",
+ "vip.announce": "p4bwDitlmpSa",
+ "vip.withdraw": "NwCNZlZVJx5s",
+ "fence.self": "zBQY7xiOw2ME",
+ "sig.activate": "eGkvl5e1nfl4",
+ "redis.promote": "5x38SpL01Q8Z",
+ "fs.activate": "bLLFm50rseHY",
+ "c.group": "hHItEvK3w4JK",
+ "failover-domains": "KsqFUnDcSq2i",
+ "model.group": "RDYBOZTRaiBh",
+ "feat.oneMember": "OF9J3x6is5GR"
 }
