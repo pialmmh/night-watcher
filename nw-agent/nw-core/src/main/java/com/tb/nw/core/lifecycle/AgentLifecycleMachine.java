@@ -21,7 +21,7 @@ import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import com.tb.nw.spi.HealthCheck;
+import com.tb.nw.spi.api.HealthCheck;
 import org.jboss.logging.Logger;
 
 import java.util.concurrent.TimeUnit;

@@ -4,12 +4,12 @@ import com.tb.nw.plugins.mysql.MysqlConfig;
 import com.tb.nw.plugins.mysql.MysqlConnections;
 import com.tb.nw.plugins.mysql.MysqlPluginDescriptor;
 import com.tb.nw.plugins.mysql.events.MySqlRemoteHealth;
-import com.tb.nw.spi.HealthCheck;
-import com.tb.nw.spi.HealthReport;
-import com.tb.nw.spi.HealthState;
-import com.tb.nw.spi.PluginDescriptor;
-import com.tb.nw.spi.ProbeContext;
-import com.tb.nw.spi.Vantage;
+import com.tb.nw.spi.api.HealthCheck;
+import com.tb.nw.spi.api.HealthReport;
+import com.tb.nw.spi.api.HealthState;
+import com.tb.nw.spi.api.PluginDescriptor;
+import com.tb.nw.spi.api.ProbeContext;
+import com.tb.nw.spi.api.Vantage;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 

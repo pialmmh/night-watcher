@@ -3,12 +3,12 @@ package com.tb.nw.core.vote;
 import com.tb.nw.core.coordinator.FailoverConfig;
 
 import com.tb.nw.core.cache.ObservationCache;
-import com.tb.nw.spi.HealthAggregator;
-import com.tb.nw.spi.HealthCheckEvent;
-import com.tb.nw.spi.Observation;
-import com.tb.nw.spi.Vantage;
-import com.tb.nw.spi.VantageBucket;
-import com.tb.nw.spi.Verdict;
+import com.tb.nw.spi.api.HealthAggregator;
+import com.tb.nw.spi.api.HealthCheckEvent;
+import com.tb.nw.spi.api.Observation;
+import com.tb.nw.spi.api.Vantage;
+import com.tb.nw.spi.api.VantageBucket;
+import com.tb.nw.spi.api.Verdict;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;

@@ -1,6 +1,6 @@
 package com.tb.nw.plugins.mysql.events;
 
-import com.tb.nw.spi.NwEvent;
+import com.tb.nw.spi.api.NwEvent;
 
 /**
  * Marker for every event the {@code nw-mysql} plugin produces or consumes.

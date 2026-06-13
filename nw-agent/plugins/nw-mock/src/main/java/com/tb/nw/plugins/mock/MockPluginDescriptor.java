@@ -4,10 +4,10 @@ import com.tb.nw.plugins.mock.events.MockCommandResult;
 import com.tb.nw.plugins.mock.events.MockFenceCommand;
 import com.tb.nw.plugins.mock.events.MockHealth;
 import com.tb.nw.plugins.mock.events.MockPromoteCommand;
-import com.tb.nw.spi.CommandEvent;
-import com.tb.nw.spi.CommandResultEvent;
-import com.tb.nw.spi.HealthCheckEvent;
-import com.tb.nw.spi.PluginDescriptor;
+import com.tb.nw.spi.api.CommandEvent;
+import com.tb.nw.spi.api.CommandResultEvent;
+import com.tb.nw.spi.api.HealthCheckEvent;
+import com.tb.nw.spi.api.PluginDescriptor;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.Set;

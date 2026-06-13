@@ -1,6 +1,6 @@
 package com.tb.nw.core.observe;
 
-import com.tb.nw.spi.FacetDetector;
+import com.tb.nw.spi.api.FacetDetector;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;

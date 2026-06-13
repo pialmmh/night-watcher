@@ -1,8 +1,8 @@
 package com.tb.nw.plugins.mysql.events;
 
 import com.tb.nw.plugins.mysql.MysqlPluginDescriptor;
-import com.tb.nw.spi.HealthState;
-import com.tb.nw.spi.NwEvent;
+import com.tb.nw.spi.api.HealthState;
+import com.tb.nw.spi.api.NwEvent;
 
 import java.time.Instant;
 

@@ -1,7 +1,7 @@
 package com.tb.nw.plugins.mock.probe;
 
 import com.tb.nw.plugins.mock.MockConfig;
-import com.tb.nw.spi.HealthState;
+import com.tb.nw.spi.api.HealthState;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;

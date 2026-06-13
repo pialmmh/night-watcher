@@ -5,8 +5,8 @@ import com.tb.nw.core.coordinator.FailoverCoordinator;
 
 import com.tb.nw.core.cache.ObservationCache;
 import com.tb.nw.core.coordinator.events.MasterDeadDetected;
-import com.tb.nw.spi.HealthState;
-import com.tb.nw.spi.Observation;
+import com.tb.nw.spi.api.HealthState;
+import com.tb.nw.spi.api.Observation;
 import io.quarkus.runtime.Startup;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -97,7 +97,7 @@ public class FailureTracker {
      */
     private boolean quorumAgrees(String target) {
         var verdict = resolver.verdictFor(target).orElse(null);
-        if (verdict == com.tb.nw.spi.Verdict.ODOWN) return true;
+        if (verdict == com.tb.nw.spi.api.Verdict.ODOWN) return true;
         LOG.infof("strike threshold hit for %s but resolver says %s (require-odown) — holding",
                 target, verdict == null ? "no-evidence" : verdict);
         return false;

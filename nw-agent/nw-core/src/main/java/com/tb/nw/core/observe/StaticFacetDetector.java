@@ -2,8 +2,8 @@ package com.tb.nw.core.observe;
 
 import com.tb.nw.core.CorePluginDescriptor;
 
-import com.tb.nw.spi.FacetDetector;
-import com.tb.nw.spi.PluginDescriptor;
+import com.tb.nw.spi.api.FacetDetector;
+import com.tb.nw.spi.api.PluginDescriptor;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 

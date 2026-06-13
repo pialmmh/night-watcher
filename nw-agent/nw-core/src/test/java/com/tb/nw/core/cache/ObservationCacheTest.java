@@ -3,8 +3,8 @@ package com.tb.nw.core.cache;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tb.nw.core.PluginRegistry;
-import com.tb.nw.spi.Observation;
-import com.tb.nw.spi.Vantage;
+import com.tb.nw.spi.api.Observation;
+import com.tb.nw.spi.api.Vantage;
 import com.tb.nw.testkit.FakeFabric;
 import com.tb.nw.testkit.Fakes;
 import com.tb.nw.testkit.TestPlugin;
@@ -15,8 +15,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.tb.nw.spi.HealthState.DEAD;
-import static com.tb.nw.spi.HealthState.FAST;
+import static com.tb.nw.spi.api.HealthState.DEAD;
+import static com.tb.nw.spi.api.HealthState.FAST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -50,7 +50,7 @@ class ObservationCacheTest {
         cache.start();
     }
 
-    private byte[] envelope(com.tb.nw.spi.HealthState state) throws Exception {
+    private byte[] envelope(com.tb.nw.spi.api.HealthState state) throws Exception {
         Observation<?> o = TestPlugin.obs("c1", "node-x", "pub1", "test.client",
                 Vantage.CLIENT, state);
         return json.writeValueAsBytes(o);

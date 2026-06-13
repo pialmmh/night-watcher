@@ -2,10 +2,10 @@ package com.tb.nw.plugins.mysql.orchestrator;
 
 import com.tb.nw.plugins.mysql.MysqlPluginDescriptor;
 import com.tb.nw.plugins.mysql.events.MySqlRemoteHealth;
-import com.tb.nw.spi.HealthAggregator;
-import com.tb.nw.spi.Observation;
-import com.tb.nw.spi.PluginDescriptor;
-import com.tb.nw.spi.VantageBucket;
+import com.tb.nw.spi.api.HealthAggregator;
+import com.tb.nw.spi.api.Observation;
+import com.tb.nw.spi.api.PluginDescriptor;
+import com.tb.nw.spi.api.VantageBucket;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 

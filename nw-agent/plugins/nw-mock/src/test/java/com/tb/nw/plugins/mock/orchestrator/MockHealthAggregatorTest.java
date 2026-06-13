@@ -2,11 +2,11 @@ package com.tb.nw.plugins.mock.orchestrator;
 
 import com.tb.nw.plugins.mock.MockPluginDescriptor;
 import com.tb.nw.plugins.mock.events.MockHealth;
-import com.tb.nw.spi.ClusterType;
-import com.tb.nw.spi.HealthState;
-import com.tb.nw.spi.Observation;
-import com.tb.nw.spi.Vantage;
-import com.tb.nw.spi.VantageBucket;
+import com.tb.nw.spi.api.ClusterType;
+import com.tb.nw.spi.api.HealthState;
+import com.tb.nw.spi.api.Observation;
+import com.tb.nw.spi.api.Vantage;
+import com.tb.nw.spi.api.VantageBucket;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -27,7 +27,7 @@ class MockHealthAggregatorTest {
 
     private static Observation<MockHealth> obs(String publisher, HealthState state, Instant when) {
         MockHealth h = new MockHealth(
-                com.tb.nw.spi.NwEvent.newEventId(), when,
+                com.tb.nw.spi.api.NwEvent.newEventId(), when,
                 MockPluginDescriptor.PLUGIN_ID, MockPluginDescriptor.PLUGIN_VERSION,
                 state, "node-x", state.name().toLowerCase(), "slave", false, "test");
         return new Observation<>("c1", ClusterType.GENERIC, "node-x", publisher, "mock.client",

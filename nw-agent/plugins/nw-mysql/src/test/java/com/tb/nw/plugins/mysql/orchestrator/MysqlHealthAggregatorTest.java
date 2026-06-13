@@ -2,11 +2,11 @@ package com.tb.nw.plugins.mysql.orchestrator;
 
 import com.tb.nw.plugins.mysql.MysqlPluginDescriptor;
 import com.tb.nw.plugins.mysql.events.MySqlRemoteHealth;
-import com.tb.nw.spi.ClusterType;
-import com.tb.nw.spi.HealthState;
-import com.tb.nw.spi.Observation;
-import com.tb.nw.spi.Vantage;
-import com.tb.nw.spi.VantageBucket;
+import com.tb.nw.spi.api.ClusterType;
+import com.tb.nw.spi.api.HealthState;
+import com.tb.nw.spi.api.Observation;
+import com.tb.nw.spi.api.Vantage;
+import com.tb.nw.spi.api.VantageBucket;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;

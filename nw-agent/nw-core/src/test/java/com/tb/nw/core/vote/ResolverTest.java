@@ -1,10 +1,10 @@
 package com.tb.nw.core.vote;
 
 import com.tb.nw.core.cache.ObservationCache;
-import com.tb.nw.spi.HealthState;
-import com.tb.nw.spi.Observation;
-import com.tb.nw.spi.Vantage;
-import com.tb.nw.spi.Verdict;
+import com.tb.nw.spi.api.HealthState;
+import com.tb.nw.spi.api.Observation;
+import com.tb.nw.spi.api.Vantage;
+import com.tb.nw.spi.api.Verdict;
 import com.tb.nw.testkit.Fakes;
 import com.tb.nw.testkit.TestPlugin;
 import org.junit.jupiter.api.Test;
@@ -13,9 +13,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.tb.nw.spi.HealthState.DEAD;
-import static com.tb.nw.spi.HealthState.DEGRADED;
-import static com.tb.nw.spi.HealthState.FAST;
+import static com.tb.nw.spi.api.HealthState.DEAD;
+import static com.tb.nw.spi.api.HealthState.DEGRADED;
+import static com.tb.nw.spi.api.HealthState.FAST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

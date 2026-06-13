@@ -24,7 +24,7 @@ public interface AgentConfig {
     String clusterName();
 
     /**
-     * Typed classifier — see {@link com.tb.nw.spi.ClusterType}. Drives plugin
+     * Typed classifier — see {@link com.tb.nw.spi.api.ClusterType}. Drives plugin
      * selection. Default is GENERIC for the early-bring-up case.
      */
     @WithDefault("Generic")

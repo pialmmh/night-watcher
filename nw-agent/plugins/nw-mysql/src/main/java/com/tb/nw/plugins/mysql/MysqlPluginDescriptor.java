@@ -9,10 +9,10 @@ import com.tb.nw.plugins.mysql.events.MySqlRemoteHealth;
 import com.tb.nw.plugins.mysql.events.MySqlSetReadOnlyCommand;
 import com.tb.nw.plugins.mysql.events.MySqlStartReplicaCommand;
 import com.tb.nw.plugins.mysql.events.MySqlStopReplicaCommand;
-import com.tb.nw.spi.CommandEvent;
-import com.tb.nw.spi.CommandResultEvent;
-import com.tb.nw.spi.HealthCheckEvent;
-import com.tb.nw.spi.PluginDescriptor;
+import com.tb.nw.spi.api.CommandEvent;
+import com.tb.nw.spi.api.CommandResultEvent;
+import com.tb.nw.spi.api.HealthCheckEvent;
+import com.tb.nw.spi.api.PluginDescriptor;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.Set;

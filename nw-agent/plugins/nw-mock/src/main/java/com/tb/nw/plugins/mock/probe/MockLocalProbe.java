@@ -2,11 +2,11 @@ package com.tb.nw.plugins.mock.probe;
 
 import com.tb.nw.plugins.mock.MockPluginDescriptor;
 import com.tb.nw.plugins.mock.events.MockHealth;
-import com.tb.nw.spi.HealthCheck;
-import com.tb.nw.spi.HealthReport;
-import com.tb.nw.spi.PluginDescriptor;
-import com.tb.nw.spi.ProbeContext;
-import com.tb.nw.spi.Vantage;
+import com.tb.nw.spi.api.HealthCheck;
+import com.tb.nw.spi.api.HealthReport;
+import com.tb.nw.spi.api.PluginDescriptor;
+import com.tb.nw.spi.api.ProbeContext;
+import com.tb.nw.spi.api.Vantage;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 

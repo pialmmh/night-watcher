@@ -1,6 +1,6 @@
 package com.tb.nw.core;
 
-import com.tb.nw.spi.PluginDescriptor;
+import com.tb.nw.spi.api.PluginDescriptor;
 import com.tb.nw.testkit.Fakes;
 
 import java.util.List;

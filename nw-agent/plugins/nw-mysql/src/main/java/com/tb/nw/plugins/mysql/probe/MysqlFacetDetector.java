@@ -2,8 +2,8 @@ package com.tb.nw.plugins.mysql.probe;
 
 import com.tb.nw.plugins.mysql.MysqlConnections;
 import com.tb.nw.plugins.mysql.MysqlPluginDescriptor;
-import com.tb.nw.spi.FacetDetector;
-import com.tb.nw.spi.PluginDescriptor;
+import com.tb.nw.spi.api.FacetDetector;
+import com.tb.nw.spi.api.PluginDescriptor;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;

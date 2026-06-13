@@ -1,6 +1,6 @@
 package com.tb.nw.core.door;
 
-import com.tb.nw.spi.CommandResultEvent;
+import com.tb.nw.spi.api.CommandResultEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 

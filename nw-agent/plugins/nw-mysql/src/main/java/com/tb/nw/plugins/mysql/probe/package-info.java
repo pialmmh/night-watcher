@@ -4,9 +4,9 @@
  * <p>Holds every class that <em>reads</em> cluster state without changing it:</p>
  *
  * <ul>
- *   <li>{@link com.tb.nw.spi.FacetDetector} — {@code MysqlFacetDetector}
+ *   <li>{@link com.tb.nw.spi.api.FacetDetector} — {@code MysqlFacetDetector}
  *       publishes the local mysql-*-here facet set.</li>
- *   <li>{@link com.tb.nw.spi.HealthCheck} implementations — currently only
+ *   <li>{@link com.tb.nw.spi.api.HealthCheck} implementations — currently only
  *       {@code MySqlRemoteClient} is CDI-active. The four local / remote
  *       master+slave variants are preserved as dormant source (the
  *       {@code @ApplicationScoped} annotation is intentionally absent so

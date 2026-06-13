@@ -4,10 +4,10 @@ import com.tb.nw.plugins.mysql.MysqlConnections;
 import com.tb.nw.plugins.mysql.MysqlPluginDescriptor;
 import com.tb.nw.plugins.mysql.events.MySqlCommandResult;
 import com.tb.nw.plugins.mysql.events.MySqlSetReadOnlyCommand;
-import com.tb.nw.spi.ActionContext;
-import com.tb.nw.spi.CommandResultEvent;
-import com.tb.nw.spi.FailoverAction;
-import com.tb.nw.spi.PluginDescriptor;
+import com.tb.nw.spi.api.ActionContext;
+import com.tb.nw.spi.api.CommandResultEvent;
+import com.tb.nw.spi.api.FailoverAction;
+import com.tb.nw.spi.api.PluginDescriptor;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 

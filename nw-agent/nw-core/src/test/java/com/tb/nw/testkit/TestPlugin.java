@@ -1,14 +1,14 @@
 package com.tb.nw.testkit;
 
-import com.tb.nw.spi.ClusterType;
-import com.tb.nw.spi.HealthAggregator;
-import com.tb.nw.spi.HealthCheckEvent;
-import com.tb.nw.spi.HealthState;
-import com.tb.nw.spi.NwEvent;
-import com.tb.nw.spi.Observation;
-import com.tb.nw.spi.PluginDescriptor;
-import com.tb.nw.spi.Vantage;
-import com.tb.nw.spi.VantageBucket;
+import com.tb.nw.spi.api.ClusterType;
+import com.tb.nw.spi.api.HealthAggregator;
+import com.tb.nw.spi.api.HealthCheckEvent;
+import com.tb.nw.spi.api.HealthState;
+import com.tb.nw.spi.api.NwEvent;
+import com.tb.nw.spi.api.Observation;
+import com.tb.nw.spi.api.PluginDescriptor;
+import com.tb.nw.spi.api.Vantage;
+import com.tb.nw.spi.api.VantageBucket;
 
 import java.time.Instant;
 
@@ -35,7 +35,7 @@ public final class TestPlugin {
             @Override public String pluginVersion() { return VERSION; }
             @Override public String serviceType() { return "test"; }
             @Override public Class<? extends HealthCheckEvent> healthEventType() { return TestHealth.class; }
-            @Override public java.util.Set<Class<? extends com.tb.nw.spi.CommandEvent>> commandEventTypes() {
+            @Override public java.util.Set<Class<? extends com.tb.nw.spi.api.CommandEvent>> commandEventTypes() {
                 return java.util.Set.of();
             }
         };

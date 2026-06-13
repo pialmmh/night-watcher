@@ -1,7 +1,7 @@
 package com.tb.nw.core.door;
 
-import com.tb.nw.spi.CommandEvent;
-import com.tb.nw.spi.FailoverAction;
+import com.tb.nw.spi.api.CommandEvent;
+import com.tb.nw.spi.api.FailoverAction;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;

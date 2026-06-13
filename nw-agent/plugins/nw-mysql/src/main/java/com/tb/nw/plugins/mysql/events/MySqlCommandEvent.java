@@ -1,6 +1,6 @@
 package com.tb.nw.plugins.mysql.events;
 
-import com.tb.nw.spi.CommandEvent;
+import com.tb.nw.spi.api.CommandEvent;
 
 /**
  * Marker for every {@link CommandEvent} the orchestrator sends to a

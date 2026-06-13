@@ -4,16 +4,16 @@
  * <p>Reserved for implementations of the night-watcher orchestration SPIs:</p>
  *
  * <ul>
- *   <li>{@link com.tb.nw.spi.FailoverAction} —
+ *   <li>{@link com.tb.nw.spi.api.FailoverAction} —
  *       <em>MysqlFenceSelf</em>, <em>MysqlPromoteSelf</em>, <em>MysqlSetReadOnly</em>,
  *       <em>MysqlStartReplica</em>, <em>MysqlStopReplica</em>, …</li>
- *   <li>{@link com.tb.nw.spi.HealthAggregator} — <em>MysqlHealthAggregator</em>
+ *   <li>{@link com.tb.nw.spi.api.HealthAggregator} — <em>MysqlHealthAggregator</em>
  *       (reduces a vantage bucket of observations to a 0.0–1.0 score)</li>
- *   <li>{@link com.tb.nw.spi.CandidateSelector} — <em>MysqlCandidateSelector</em>
+ *   <li>{@link com.tb.nw.spi.api.CandidateSelector} — <em>MysqlCandidateSelector</em>
  *       (picks promotion target by LSN / uptime / hostname tiebreakers)</li>
- *   <li>{@link com.tb.nw.spi.FailoverPlanGenerator} — <em>MysqlPlanGenerator</em>
+ *   <li>{@link com.tb.nw.spi.api.FailoverPlanGenerator} — <em>MysqlPlanGenerator</em>
  *       (builds the ordered Plan the Dispatcher walks)</li>
- *   <li>{@link com.tb.nw.spi.ClusterCondition} — predicates the Activation
+ *   <li>{@link com.tb.nw.spi.api.ClusterCondition} — predicates the Activation
  *       engine evaluates against the cluster topology</li>
  * </ul>
  *

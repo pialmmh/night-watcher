@@ -1,8 +1,8 @@
 package com.tb.nw.plugins.mock.events;
 
 import com.tb.nw.plugins.mock.MockPluginDescriptor;
-import com.tb.nw.spi.CommandEvent;
-import com.tb.nw.spi.NwEvent;
+import com.tb.nw.spi.api.CommandEvent;
+import com.tb.nw.spi.api.NwEvent;
 
 import java.time.Instant;
 

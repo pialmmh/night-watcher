@@ -4,9 +4,9 @@ import com.tb.nw.core.cache.ObservationCache;
 import com.tb.nw.core.dispatch.Dispatcher;
 import com.tb.nw.core.door.ActionEndpoint;
 
-import com.tb.nw.spi.CommandEvent;
-import com.tb.nw.spi.CommandResultEvent;
-import com.tb.nw.spi.PluginDescriptor;
+import com.tb.nw.spi.api.CommandEvent;
+import com.tb.nw.spi.api.CommandResultEvent;
+import com.tb.nw.spi.api.PluginDescriptor;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;

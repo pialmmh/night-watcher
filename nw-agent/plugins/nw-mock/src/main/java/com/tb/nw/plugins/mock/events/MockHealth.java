@@ -1,9 +1,9 @@
 package com.tb.nw.plugins.mock.events;
 
 import com.tb.nw.plugins.mock.MockPluginDescriptor;
-import com.tb.nw.spi.HealthCheckEvent;
-import com.tb.nw.spi.HealthState;
-import com.tb.nw.spi.NwEvent;
+import com.tb.nw.spi.api.HealthCheckEvent;
+import com.tb.nw.spi.api.HealthState;
+import com.tb.nw.spi.api.NwEvent;
 
 import java.time.Instant;
 

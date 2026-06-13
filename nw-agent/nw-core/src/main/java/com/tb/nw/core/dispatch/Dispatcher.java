@@ -5,10 +5,10 @@ import com.tb.nw.core.boards.AgentDirectory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tb.nw.spi.CommandEvent;
-import com.tb.nw.spi.CommandRefused;
-import com.tb.nw.spi.CommandResultEvent;
-import com.tb.nw.spi.PluginDescriptor;
+import com.tb.nw.spi.api.CommandEvent;
+import com.tb.nw.spi.api.CommandRefused;
+import com.tb.nw.spi.api.CommandResultEvent;
+import com.tb.nw.spi.api.PluginDescriptor;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;

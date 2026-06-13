@@ -3,12 +3,12 @@ package com.tb.nw.core.observe;
 import com.tb.nw.core.AgentConfig;
 import com.tb.nw.core.cache.ObservationCache;
 
-import com.tb.nw.spi.ClusterType;
-import com.tb.nw.spi.HealthCheck;
-import com.tb.nw.spi.HealthReport;
-import com.tb.nw.spi.Observation;
-import com.tb.nw.spi.HealthCheckEvent;
-import com.tb.nw.spi.ProbeContext;
+import com.tb.nw.spi.api.ClusterType;
+import com.tb.nw.spi.api.HealthCheck;
+import com.tb.nw.spi.api.HealthReport;
+import com.tb.nw.spi.api.Observation;
+import com.tb.nw.spi.api.HealthCheckEvent;
+import com.tb.nw.spi.api.ProbeContext;
 import io.quarkus.runtime.Startup;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
