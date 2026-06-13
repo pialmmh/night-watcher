@@ -1,1 +1,1 @@
-com.tb.nw.core.config.TenantProfileConfigSource
+com.tb.nw.core.config.internal.TenantProfileConfigSource

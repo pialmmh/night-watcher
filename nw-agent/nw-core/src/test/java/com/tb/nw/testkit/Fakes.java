@@ -1,7 +1,7 @@
 package com.tb.nw.testkit;
 
-import com.tb.nw.core.AgentConfig;
-import com.tb.nw.core.coordinator.FailoverConfig;
+import com.tb.nw.core.dependencies.AgentConfig;
+import com.tb.nw.core.coordinator.dependencies.FailoverConfig;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.util.TypeLiteral;
 
